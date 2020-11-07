@@ -1,4 +1,5 @@
 streamlit
+scipy
 requests
 contextlib
 PyPortfolioOpt
