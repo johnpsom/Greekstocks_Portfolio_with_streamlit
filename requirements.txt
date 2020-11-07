@@ -1,5 +1,4 @@
 streamlit
-csv
 requests
 contextlib
 pandas
