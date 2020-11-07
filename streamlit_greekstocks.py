@@ -11,7 +11,7 @@ from contextlib import closing
 import pandas as pd
 import numpy as np
 from scipy import stats
-import matplotlib.pyplot as plt
+
 import pypfopt
 from pypfopt.efficient_frontier import EfficientFrontier,objective_functions
 from pypfopt import expected_returns,risk_models #,plotting
