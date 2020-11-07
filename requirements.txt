@@ -1,8 +1,4 @@
 streamlit
 requests
 contextlib
-pandas
-numpy
-scipy
-matplotlib
 PyPortfolioOpt
