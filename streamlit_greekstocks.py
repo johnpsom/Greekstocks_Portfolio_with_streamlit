@@ -171,7 +171,7 @@ stocks=['CENER.ATH','CNLCAP.ATH','TITC.ATH','AVAX.ATH','AVE.ATH','ADMIE.ATH','AL
             'PETRO.ATH','PLAT.ATH','PLAIS.ATH','PLAKR.ATH','PPAK.ATH','PROF.ATH','REVOIL.ATH','SAR.ATH','SPACE.ATH',
             'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH','FORTH.ATH'           
             ]
-st.beta_set_page_config(layout="wide")
+st.set_page_config(layout="wide")
 st.title('Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ')
 data_load_state = st.text('Loading data...')
 # Load rows of data into the dataframe.
