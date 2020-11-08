@@ -11,13 +11,18 @@ from contextlib import closing
 import pandas as pd
 import numpy as np
 from scipy import stats
-
 import pypfopt
-from pypfopt.efficient_frontier import EfficientFrontier,objective_functions
+from pypfopt.efficient_frontier import EfficientFrontier
 from pypfopt import expected_returns,risk_models #,plotting
 from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
 from pypfopt.risk_models import CovarianceShrinkage
-
+import smtplib, ssl
+import os
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import parseaddr
 
 @st.cache
 def load_data():
@@ -84,6 +89,50 @@ def cumulative_returns(stock,returns):
     res.columns = [stock]
     return res
 
+def send_portfolio_byemail(filename, receiver_email):
+    smtp_server = "smtp.gmail.com"
+    port =465 # For starttls
+    sender_email = "getyour.portfolio@gmail.com"
+    password = "!@#portfolio20"
+    subject = "Το Χαρτοφυλάκιό σου"
+    body = "Βρες στο συνημμένο αρχείο το χαρτοφυλάκιο που έχεις φτιάξει."
+    # Create a multipart message and set headers
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = receiver_email
+    message["Subject"] = subject
+    message["Bcc"] = receiver_email  # Recommended for mass emails
+    # Add body to email
+    message.attach(MIMEText(body, "plain"))
+    # Open file=filename in binary mode
+    with open(filename, "rb") as attachment:
+        # Add file as application/octet-stream
+        # Email client can usually download this automatically as attachment
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(attachment.read())
+    
+    # Encode file in ASCII characters to send by email    
+    encoders.encode_base64(part)
+    
+    # Add header as key/value pair to attachment part
+    part.add_header("Content-Disposition",
+        f"attachment; filename= {filename}",
+    )
+    
+    # Add attachment to message and convert message to string
+    message.attach(part)
+    text = message.as_string()
+    
+    # Log in to server using secure context and send email
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, text)
+        #after send email delete the csv file
+        if os.path.isfile(filename):
+            os.remove(filename) 
+    return        
+
 #stock universe 
 stocks=['CENER.ATH','CNLCAP.ATH','TITC.ATH','AVAX.ATH','AVE.ATH','ADMIE.ATH','ALMY.ATH','ALPHA.ATH','AEGN.ATH',
             'ASCO.ATH','TATT.ATH','VIO.ATH','BIOSK.ATH','VOSYS.ATH','BYTE.ATH','GEBKA.ATH','GEKTERNA.ATH','PPC.ATH',
@@ -96,7 +145,7 @@ stocks=['CENER.ATH','CNLCAP.ATH','TITC.ATH','AVAX.ATH','AVE.ATH','ADMIE.ATH','AL
             'PETRO.ATH','PLAT.ATH','PLAIS.ATH','PLAKR.ATH','PPAK.ATH','PROF.ATH','REVOIL.ATH','SAR.ATH','SPACE.ATH',
             'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH','FORTH.ATH'           
             ]
-st.set_page_config(layout="wide")
+st.beta_set_page_config(layout="wide")
 st.title('Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ')
 data_load_state = st.text('Loading data...')
 # Load rows of data into the dataframe.
@@ -198,9 +247,15 @@ c1.write(df_buy)
 c1.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buy['value'].sum(),100*df_buy['value'].sum()/port_value))
 c1.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buy['value'].sum(),100-100*df_buy['value'].sum()/port_value))
 df_buy=df_buy.append({'stock':'CASH','weights': round(1-df_buy['value'].sum()/port_value,2),'shares':0,'price':0,'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
-print(df_buy)
+c1.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
+filenm=c1.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio1",key=1)
+receiver_email=c1.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=2)
+filenm=filenm+'.csv'
+df_buy.to_csv(filenm)
 if c1.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1',key=1):
-    df_buy.to_csv('Portfolio1.csv')
+    if '@' in parseaddr(receiver_email)[1]:
+        send_portfolio_byemail(filenm,receiver_email)
+        
 #------Χαρτοφυλάκιο Νο2
 st.sidebar.write('Παράμετροι για το Χαρτοφυλάκιο Νο2')
 c2.subheader('Χαρτοφυλάκιο Νο2')
@@ -308,9 +363,15 @@ c2.write(df_buym)
 c2.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buym['value'].sum(),100*df_buym['value'].sum()/port_value))
 c2.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buym['value'].sum(),100-100*df_buym['value'].sum()/port_value))
 df_buym=df_buym.append({'stock':'CASH','weights': round(1-df_buym['value'].sum()/port_value,2),'shares':0,'price':0,'value':round(port_value-df_buym['value'].sum(),2)}, ignore_index=True)
-print(df_buym)
+c2.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
+filenm2=c2.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio2",key=1)
+receiver_email2=c2.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=4)
+filenm2=filenm2+'.csv'
+df_buym.to_csv(filenm2)
 if c2.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 2',key=2):
-    df_buym.to_csv('Portfolio2.csv')
+    if '@' in parseaddr(receiver_email)[1]:
+        send_portfolio_byemail(filenm2,receiver_email2)
+
 #-----------------------------------------
 st.sidebar.write('Παράμετροι για το Χαρτοφυλάκιο Νο3')
 c3.subheader('Χαρτοφυλάκιο Νο3')
@@ -376,8 +437,14 @@ c3.write(df_buyh)
 c3.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buyh['value'].sum(),100*df_buyh['value'].sum()/port_value))
 c3.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buyh['value'].sum(),100-100*df_buyh['value'].sum()/port_value))
 df_buyh=df_buyh.append({'stock':'CASH','weights': round(1-df_buyh['value'].sum()/port_value,2),'shares':0,'price':0,'value':round(port_value-df_buyh['value'].sum(),2)}, ignore_index=True)
+c3.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
+filenm3=c3.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio3",key=1)
+receiver_email3=c3.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=6)
+filenm3=filenm3+'.csv'
+df_buyh.to_csv(filenm3)
 if c3.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 3',key=3):
-    df_buyh.to_csv('Portfolio3.csv')
+    if '@' in parseaddr(receiver_email)[1]:
+        send_portfolio_byemail(filenm3,receiver_email3)
 
 #-----Χαρτοφυλάκιο Νο4-------------------------------
 st.sidebar.write('Παράμετροι για το Χαρτοφυλάκιο Νο4')
@@ -449,8 +516,14 @@ c4.write(df_buyc)
 c4.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buyc['value'].sum(),100*df_buyc['value'].sum()/port_value))
 c4.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buyc['value'].sum(),100-100*df_buyc['value'].sum()/port_value))
 df_buyc=df_buyc.append({'stock':'CASH','weights': round(1-df_buyc['value'].sum()/port_value,2),'shares':0,'price':0,'value':round(port_value-df_buyc['value'].sum(),2)}, ignore_index=True)
+c4.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
+filenm4=c4.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio4",key=1)
+receiver_email4=c4.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=8)
+filenm4=filenm4+'.csv'
+df_buyc.to_csv(filenm4)
 if c4.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 4',key=4):
-    df_buyc.to_csv('Portfolio4.csv')
+    if '@' in parseaddr(receiver_email)[1]:
+        send_portfolio_byemail(filenm4,receiver_email4)
 
 #-----------------------------------------------
 st.write('Εαν έχεις προηγουμένως σώσει ένα Χαροφυλάκιο πατήστε ένα από τα παρακάτω κουμπιά, ανάλογα τον τύπο, για να δούμε πόσο αποδίδει τώρα')    
