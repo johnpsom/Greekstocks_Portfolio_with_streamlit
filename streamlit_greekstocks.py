@@ -24,6 +24,43 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import parseaddr
 
+from enum import Enum
+from io import BytesIO, StringIO
+from typing import Union
+
+STYLE = """
+<style>
+img {
+    max-width: 100%;
+}
+</style>
+"""
+
+FILE_TYPES = ["csv"]
+
+
+class FileType(Enum):
+    """Used to distinguish between file types"""
+    CSV = "csv"
+
+
+def get_file_type(file: Union[BytesIO, StringIO]) -> FileType:
+    """The file uploader widget does not provide information on the type of file uploaded so we have
+    to guess using rules or ML
+
+    I've implemented rules for now :-)
+
+    Arguments:
+        file {Union[BytesIO, StringIO]} -- The file uploaded
+
+    Returns:
+        FileType -- A best guess of the file type
+    """
+    return FileType.CSV
+
+
+
+
 @st.cache
 def load_data():
     df=pd.DataFrame()
@@ -152,12 +189,15 @@ data_load_state = st.text('Loading data...')
 data = load_data()
 # Notify the reader that the data was successfully loaded.
 data_load_state.text("Done! (using st.cache)")
-st.write('υπολογισμός βέλτιστου χαρτοφυλακίου από 90 μετοχές του ΧΑ βασισμένο'+
-        'στην σύγχρονη θεωρία Χαρτοφυλακίου του Νομπελίστα Οικονομολόγου Harry Markowitz')
-st.write('Βλ. στο παρακάτω παράθυρο την λίστα των μετοχών με τις ιστορικές '+
+st.subheader('ΠΡΟΣΟΧΗ ότι βλέπετε εδώ είναι φτιαγμένο για ενημερωτικούς και εκπαιδευτικούς σκοπούς μόνο και σε καμιά περίπτωση δεν αποτελεί επενδυτική ή άλλου είδους πρόταση.')
+st.subheader('Οι επενδύσεις σε μετοχές ενέχουν οικονομικό ρίσκο και ο δημιουργός της εφαρμογής δεν φέρει καμιά ευθύνη σε περίπτωση απώλειας περιουσίας.')
+st.subheader('Μπορείτε να επικοινωνείτe τα σχόλια και παρατηρήσεις σας στο email: getyourportfolio@gmail.com .')
+st.write('υπολογισμός βέλτιστου χαρτοφυλακίου από 90 επιλεγμένες μετοχές του ΧΑ, βασισμένο στις αρχές της Σύγχρονης Θεωρίας Χαρτοφυλακίου του Νομπελίστα Οικονομολόγου Harry Markowitz.')
+st.write('στο παρακάτω παράθυρο φαίνεται η λίστα των μετοχών με τις ιστορικές '+
         'ημερήσιες τιμές κλεισίματός τους για τις τελευταίες '+str(len(data))+' μέρες')
 st.write('Οι μετοχές που έχουν αρχικά επιλεγεί είναι οι παρακάτω που βλέπουμε στον πίνακα των τιμών κλεισίματος τους. Τα ονόματα τους είναι τα ονόματα των στηλών του πίνακα.')
-st.sidebar.write('ΓΕΝΙΚΕΣ ΠΑΡΑΜΕΤΡΟΙ ΒΕΛΤΙΣΤΟΠΟΙΗΜΕΝΩΝ ΧΑΡΤΟΦΥΛΑΚΙΩΝ')
+st.write('Επιλέξτε από την στήλη αριστερά το μέγεθος, το βάθος χρόνου και το είδος του Χαρτοφυλακίου που θέλετε να ψάξει και να φτιάξει για σας η εφαρμογή.')
+
 st.dataframe(data=data.iloc[:,1:])
 df=data.iloc[:,1:]
 q=st.sidebar.slider('Υπολογισμός με βάση τις τιμές των τελευταίων Χ ημερών', 60, 300, 180,10)
@@ -167,25 +207,26 @@ df_cum_ret=pd.DataFrame()
 for stock in stocks:
     df_cum_ret[stock]=cumulative_returns(stock, df_pct[stock])
 
-st.write('Συσσωρευτικές αποδόσεις των παραπάνω μετοχών για τις Χ τελευταίες ημέρες')
+st.write('Συσσωρευτικές αποδόσεις των παραπάνω μετοχών για τις Χ τελευταίες ημέρες, όπου Χ η επιλογή στην αριστερή στήλη.')
 st.dataframe(100*(df_cum_ret.iloc[-1:,:]-1))
 m_cum_ret=pd.DataFrame((df_cum_ret.iloc[-1:,:])).max()
 max_ret=round(100*(m_cum_ret.max()-1),0)
-st.write('Πίνακας των ημερησίων ποσοστιαίων μεταβολών όλων των μετοχών για τις Χ ημέρες')
+st.write('Πίνακας των ημερησίων ποσοστιαίων μεταβολών όλων των Μετοχών για τις Χ ημέρες')
 st.dataframe(df_pct)
 corr_table = df_pct.corr()
 corr_table['stock1'] = corr_table.index
 corr_table = corr_table.melt(id_vars = 'stock1', var_name = 'stock2').reset_index(drop = True)
 corr_table = corr_table[corr_table['stock1'] < corr_table['stock2']].dropna()
 corr_table['abs_value'] = np.abs(corr_table['value'])
-st.write('Πίνακας τικών συντελεστών συσχέτισης των μετοχών')
+st.write('Πίνακας των τιμών των Συντελεστών Συσχέτισης των Μετοχών')
 st.dataframe(corr_table)
 #-----Γενικές παράμετροι
+st.sidebar.write('ΠΑΡΑΜΕΤΡΟΙ ΒΕΛΤΙΣΤΟΠΟΙΗΜΕΝΩΝ ΧΑΡΤΟΦΥΛΑΚΙΩΝ')
 port_value=st.sidebar.slider('Αρχική επένδυση στο χαρτοφυλάκιο', 1000, 10000, 3000,1000)
-riskmo = st.sidebar.checkbox('Επιλeγμένο επιλέγει το μοντέλο ρίσκου Ledoit Wolf αλλιώς χρησιμοποιεί τον πίνακα των συνδιακυμάνσεων')
-weightsmo=st.sidebar.checkbox('Επιλεγμένο επιλέγει τον υπολογισμό των βαρών με βάση τον μέγιστο Sharpe Ratio αλλιώς με την ελάχιστη διακύμανση')
-allocmo=st.sidebar.checkbox('Επιλεγμένο επιλέγει τον υπολογισμό του greedy_portfolio αλλιώς επιλέγει το lp_portfolio')
-cutoff=st.sidebar.slider('Ελάχιστο Ποσοστό συμμετοχής μιας Μετοχής στο χαρτοφυλάκιο', 0.01, 0.30, 0.05)
+riskmo = st.sidebar.checkbox('Επιλeγμένο επιλέγει το μοντέλο ρίσκου Ledoit Wolf αλλιώς χρησιμοποιεί τον πίνακα των συνδιακυμάνσεων των Μετοχών.')
+weightsmo=st.sidebar.checkbox('Επιλεγμένο επιλέγει τον υπολογισμό των βαρών με βάση τον μέγιστο Sharpe Ratio αλλιώς με την ελάχιστη διακύμανση.')
+allocmo=st.sidebar.checkbox('Επιλεγμένο επιλέγει τον υπολογισμό του μοντέλου του greedy_portfolio αλλιώς επιλέγει το lp_portfolio.')
+cutoff=st.sidebar.slider('Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.30, 0.05)
 
 c1,c2,c3,c4= st.beta_columns((1,1,1,1))
 #-----Χαρτοφυλάκιο Νο1 γενικό
@@ -526,10 +567,16 @@ if c4.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 4',key=
         send_portfolio_byemail(filenm4,receiver_email4)
 
 #-----------------------------------------------
-st.write('Εαν έχεις προηγουμένως σώσει ένα Χαροφυλάκιο πατήστε ένα από τα παρακάτω κουμπιά, ανάλογα τον τύπο, για να δούμε πόσο αποδίδει τώρα')    
-if c1.button('Χαρτοφυλάκιο τύπου 1'):
-    df1=pd.read_csv('Portfolio1.csv')
+st.subheader('Εαν έχετε προηγουμένως χρησιμοποιήσει την εφαρμογή και έχετε ζητήσει ένα Χαροφυλάκιο ανεβάστε το csv αρχείο στο παρακάτω πεδίο για να δείτε την απόδοσή του σήμερα.')    
+st.markdown(STYLE, unsafe_allow_html=True)
+file = st.file_uploader("Σύρτε και αφήστε εδώ το Χαρτοφυλάκιό σας έφτιαξε η εφαρμογή για σας (*.csv)", type='csv')
+show_file = st.empty()
+if not file:
+    show_file.info("")
+else:    
+    df1 = pd.read_csv(file)
     df1=df1.iloc[:,1:]
+    print(df1)
     df1=df1.rename(columns={'price':'bought price'})
     last_price=[]
     new_values=[]
@@ -552,98 +599,11 @@ if c1.button('Χαρτοφυλάκιο τύπου 1'):
         new_weights.append(df1.loc[df1['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]/new_port_value)
     new_weights.append(df1.iloc[-1]['new value']/ new_port_value)
     df1['new weights']=new_weights    
-    c1.write('Αρχική αξία του Χαροφυλακίου ήταν :'+str(df1['value'].sum())+'€')
-    c1.write('Τώρα είναι :'+str(round(new_port_value,2))+'€')
-    c1.write(' δηλ. έχουμε μια απόδοση ίση με '+str(100*round(new_port_value/df1['value'].sum()-1,4))+'%')
-    c1.dataframe(df1)
-    
+    st.write('Αρχική αξία του Χαροφυλακίου ήταν :'+str(df1['value'].sum())+'€')
+    st.write('Τώρα είναι :'+str(round(new_port_value,2))+'€')
+    st.write(' δηλ. έχουμε μια απόδοση ίση με '+str(100*round(new_port_value/df1['value'].sum()-1,4))+'%')
+    st.dataframe(df1)
+    file.close()
+        
+      
   
-if c2.button('Χαρτοφυλάκιο τύπου 2'):
-    df2=pd.read_csv('Portfolio2.csv')
-    df2=df2.iloc[:,1:]
-    df2=df2.rename(columns={'price':'bought price'})
-    last_price=[]
-    new_values=[]
-    new_weights=[]
-    pct=[]
-    for stock in list(df2.iloc[:-1]['stock']):
-        last_price.append(df.iloc[-1][stock])
-        nv2=df2.loc[df2['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]
-        new_values.append(nv2)
-        pt=round(100*(df.iloc[-1][stock]/df2.loc[df2['stock']==stock,'bought price'].values[0]-1),2)
-        pct.append(pt)
-    last_price.append(0)
-    pct.append(0)
-    df2['last price']=last_price
-    new_values.append(df2.iloc[-1]['value'])
-    df2['new value']=new_values
-    df2['pct_change%']=pct
-    new_port_value2=df2['new value'].sum()
-    for stock in list(df2.iloc[:-1]['stock']):
-        new_weights.append(df2.loc[df2['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]/new_port_value2)
-    new_weights.append(df2.iloc[-1]['new value']/ new_port_value2)
-    df2['new weights']=new_weights    
-    c2.write('Αρχική αξία του Χαροφυλακίου ήταν :'+str(df2['value'].sum())+'€')
-    c2.write('Τώρα είναι :'+str(round(new_port_value2,2))+'€')
-    c2.write('δηλ. έχουμε μια απόδοση ίση με '+str(100*round(new_port_value2/df2['value'].sum()-1,4))+'%')
-    c2.dataframe(df2)
-    
-if c3.button('Χαρτοφυλάκιο τύπου 3'):
-    df3=pd.read_csv('Portfolio3.csv')
-    df3=df3.iloc[:,1:]
-    df3=df3.rename(columns={'price':'bought price'})
-    last_price=[]
-    new_values=[]
-    new_weights=[]
-    pct=[]
-    for stock in list(df3.iloc[:-1]['stock']):
-        last_price.append(df.iloc[-1][stock])
-        nv3=df3.loc[df3['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]
-        new_values.append(nv3)
-        pt=round(100*(df.iloc[-1][stock]/df3.loc[df3['stock']==stock,'bought price'].values[0]-1),2)
-        pct.append(pt)
-    last_price.append(0)
-    pct.append(0)
-    df3['last price']=last_price
-    new_values.append(df3.iloc[-1]['value'])
-    df3['new value']=new_values
-    df3['pct_change%']=pct
-    new_port_value3=df3['new value'].sum()
-    for stock in list(df3.iloc[:-1]['stock']):
-        new_weights.append(df3.loc[df3['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]/new_port_value3)
-    new_weights.append(df3.iloc[-1]['new value']/ new_port_value3)
-    df3['new weights']=new_weights    
-    c3.write('Αρχική αξία του Χαροφυλακίου ήταν :'+str(df3['value'].sum())+'€')
-    c3.write('Τώρα είναι :'+str(round(new_port_value3,2))+'€')
-    c3.write('δηλ. έχουμε μια απόδοση ίση με '+str(100*round(new_port_value3/df3['value'].sum()-1,4))+'%')
-    c3.dataframe(df3) 
-    
-if c4.button('Χαρτοφυλάκιο τύπου 4'):
-    df4=pd.read_csv('Portfolio4.csv')
-    df4=df4.iloc[:,1:]
-    df4=df4.rename(columns={'price':'bought price'})
-    last_price=[]
-    new_values=[]
-    new_weights=[]
-    pct=[]
-    for stock in list(df4.iloc[:-1]['stock']):
-        last_price.append(df.iloc[-1][stock])
-        nv4=df4.loc[df4['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]
-        new_values.append(nv4)
-        pt=round(100*(df.iloc[-1][stock]/df4.loc[df4['stock']==stock,'bought price'].values[0]-1),2)
-        pct.append(pt)
-    last_price.append(0)
-    pct.append(0)
-    df4['last price']=last_price
-    new_values.append(df4.iloc[-1]['value'])
-    df4['new value']=new_values
-    df4['pct_change%']=pct
-    new_port_value4=df4['new value'].sum()
-    for stock in list(df4.iloc[:-1]['stock']):
-        new_weights.append(df4.loc[df4['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]/new_port_value4)
-    new_weights.append(df4.iloc[-1]['new value']/ new_port_value4)
-    df4['new weights']=new_weights    
-    c4.write('Αρχική αξία του Χαροφυλακίου ήταν :'+str(df4['value'].sum())+'€')
-    c4.write('Τώρα είναι :'+str(round(new_port_value4,2))+'€')
-    c4.write('δηλ. έχουμε μια απόδοση ίση με '+str(100*round(new_port_value4/df4['value'].sum()-1,4))+'%')
-    c4.dataframe(df4)    
