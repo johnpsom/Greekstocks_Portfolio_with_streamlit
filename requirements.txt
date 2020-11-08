@@ -2,3 +2,6 @@ streamlit
 requests
 PyPortfolioOpt
 scikit-learn
+email
+smtp
+ssl
