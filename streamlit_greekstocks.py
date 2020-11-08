@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Oct 25 13:19:50 2020
-
-@author: ioannis.psomiadis@gmail.com
+@author: getyour.portfolio@gmail.com
 """
 import streamlit as st
 import csv
@@ -62,19 +61,9 @@ def get_file_type(file: Union[BytesIO, StringIO]) -> FileType:
 
 
 @st.cache
-def load_data():
+def load_data(stocks):
     df=pd.DataFrame()
-    stocks=['CENER.ATH','CNLCAP.ATH','TITC.ATH','AVAX.ATH','AVE.ATH','ADMIE.ATH','ALMY.ATH','ALPHA.ATH','AEGN.ATH',
-            'ASCO.ATH','TATT.ATH','VIO.ATH','BIOSK.ATH','VOSYS.ATH','BYTE.ATH','GEBKA.ATH','GEKTERNA.ATH','PPC.ATH',
-            'DOMIK.ATH','EEE.ATH','EKTER.ATH','ELIN.ATH','TELL.ATH','ELLAKTOR.ATH','ELPE.ATH','ELTON.ATH','ELHA.ATH','ENTER.ATH',
-            'EPSIL.ATH','EYAPS.ATH','ETE.ATH','EYDAP.ATH','EUPIC.ATH','EUROB.ATH','EXAE.ATH','IATR.ATH','IKTIN.ATH','ILYDA.ATH',
-            'INKAT.ATH','INLOT.ATH','INTERCO.ATH','INTET.ATH','INTRK.ATH','KAMP.ATH','KEKR.ATH','KEPEN.ATH',
-            'KLM.ATH','KMOL.ATH','QUAL.ATH','QUEST.ATH','KRI.ATH','LAVI.ATH','LAMDA.ATH','KYLO.ATH','LYK.ATH','MEVA.ATH',
-            'MERKO.ATH','MIG.ATH','MIN.ATH','MOH.ATH','BELA.ATH','BRIQ.ATH','MYTIL.ATH','NEWS.ATH','OLTH.ATH','PPA.ATH',
-            'OLYMP.ATH','OPAP.ATH','HTO.ATH','OTOEL.ATH','PAIR.ATH','PAP.ATH','PASAL.ATH','TPEIR.ATH','PERF.ENAX',
-            'PETRO.ATH','PLAT.ATH','PLAIS.ATH','PLAKR.ATH','PPAK.ATH','PROF.ATH','REVOIL.ATH','SAR.ATH','SPACE.ATH',
-            'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH','FORTH.ATH'           
-            ]
+    
     i=1
     for stock in stocks:
         dates=[]
@@ -186,7 +175,7 @@ st.beta_set_page_config(layout="wide")
 st.title('Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ')
 data_load_state = st.text('Loading data...')
 # Load rows of data into the dataframe.
-data = load_data()
+data = load_data(stocks)
 # Notify the reader that the data was successfully loaded.
 data_load_state.text("Done! (using st.cache)")
 st.subheader('ΠΡΟΣΟΧΗ ότι βλέπετε εδώ είναι φτιαγμένο για ενημερωτικούς και εκπαιδευτικούς σκοπούς μόνο και σε καμιά περίπτωση δεν αποτελεί επενδυτική ή άλλου είδους πρόταση.')
