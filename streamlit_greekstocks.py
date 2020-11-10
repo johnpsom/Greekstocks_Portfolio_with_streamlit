@@ -37,11 +37,9 @@ img {
 
 FILE_TYPES = ["csv"]
 
-
 class FileType(Enum):
     """Used to distinguish between file types"""
     CSV = "csv"
-
 
 def get_file_type(file: Union[BytesIO, StringIO]) -> FileType:
     """The file uploader widget does not provide information on the type of file uploaded so we have
@@ -58,8 +56,6 @@ def get_file_type(file: Union[BytesIO, StringIO]) -> FileType:
     return FileType.CSV
 
 
-
-
 @st.cache(ttl=24*60*60)
 def load_data():
     df=pd.DataFrame()
@@ -74,7 +70,6 @@ def load_data():
             'PETRO.ATH','PLAT.ATH','PLAIS.ATH','PLAKR.ATH','PPAK.ATH','PROF.ATH','REVOIL.ATH','SAR.ATH','SPACE.ATH',
             'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH','FORTH.ATH'           
             ]
-    
     i=1
     for stock in stocks:
         dates=[]
@@ -126,6 +121,7 @@ def cumulative_returns(stock,returns):
     res.columns = [stock]
     return res
 
+#send your portfolio by email
 def send_portfolio_byemail(filename, receiver_email):
     smtp_server = "smtp.gmail.com"
     port =465 # For starttls
