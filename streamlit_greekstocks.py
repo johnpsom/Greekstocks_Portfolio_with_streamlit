@@ -60,7 +60,7 @@ def get_file_type(file: Union[BytesIO, StringIO]) -> FileType:
 
 
 
-@st.cache
+@st.cache(ttl=24*60*60)
 def load_data():
     df=pd.DataFrame()
     stocks=['CENER.ATH','CNLCAP.ATH','TITC.ATH','AVAX.ATH','AVE.ATH','ADMIE.ATH','ALMY.ATH','ALPHA.ATH','AEGN.ATH',
