@@ -126,7 +126,7 @@ def send_portfolio_byemail(filename, receiver_email):
     smtp_server = "smtp.gmail.com"
     port =465 # For starttls
     sender_email = "getyour.portfolio@gmail.com"
-    password = "!@#portfolio20"
+    password = MY_SECRET
     subject = "Το Χαρτοφυλάκιό σου"
     body = "Βρες στο συνημμένο αρχείο το χαρτοφυλάκιο που έχεις φτιάξει."
     # Create a multipart message and set headers
