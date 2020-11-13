@@ -637,11 +637,11 @@ for metoxi in stocks:
 
         if(condition_1 and condition_2 and condition_3 and condition_4 and condition_5 and condition_6 and condition_7 and condition_8):
             df_screener = df_screener.append({'Stock': metoxi, "RS_Rating": RS_Rating ,"50 Day MA": moving_average_50, "150 Day Ma": moving_average_150, "200 Day MA": moving_average_200, "52 Week Low": low_of_52week, "52 week High": high_of_52week}, ignore_index=True)
-            st.write (stock + " made the requirements")
-            st.dataframe(df_screener)
+            
     except Exception as e:
         st.write(e,"No data on "+stock)       
-        
+
+c4.dataframe(df_screener)        
 #-----------------------------------------------
 st.subheader('Εαν έχετε προηγουμένως χρησιμοποιήσει την εφαρμογή και έχετε ζητήσει ένα Χαροφυλάκιο ανεβάστε το csv αρχείο στο παρακάτω πεδίο για να δείτε την απόδοσή του σήμερα.')    
 st.markdown(STYLE, unsafe_allow_html=True)
