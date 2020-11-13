@@ -195,7 +195,7 @@ st.write('Επιλέξτε από την στήλη αριστερά το μέγ
 
 st.dataframe(data=data.iloc[:,1:])
 df=data.iloc[:,1:]
-q=st.sidebar.slider('Υπολογισμός με βάση τις τιμές των τελευταίων Χ ημερών', 60, 300, 180,10)
+q=st.sidebar.slider('Υπολογισμός με βάση τις τιμές των τελευταίων Χ ημερών', 60, 300, 300,10)
 df_t=df.tail(q)
 df_pct=df_t.pct_change()
 df_cum_ret=pd.DataFrame()
