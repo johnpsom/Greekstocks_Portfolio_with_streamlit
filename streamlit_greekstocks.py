@@ -564,13 +564,13 @@ if c4.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 4',key=
 #-----------------------------------------------use the stock screener
 
 index_df=pd.DataFrame()
-index_df['FTSE'] = data.iloc[:,-1].tail(q)
+index_df['FTSE'] = data.iloc[:,-1]
 index_df['Percent Change'] = index_df['FTSE'].pct_change()
 index_return = index_df['Percent Change'].sum() * 100
 df_screener=pd.DataFrame(columns=['Stock', "RS_Rating", "50 Day MA", "150 Day Ma", "200 Day MA", "52 Week Low", "52 week High"])
 for metoxi in stocks:
     df1=pd.DataFrame()
-    df1['Percent Change'+metoxi] = df_t[metoxi].pct_change()    
+    df1['Percent Change'+metoxi] = data[metoxi].pct_change()    
     stock_return = df1['Percent Change'+metoxi].sum() * 100
     RS_Rating = round((stock_return / index_return) * 10, 2)
     try:
