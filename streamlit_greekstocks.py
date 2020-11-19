@@ -97,7 +97,7 @@ def load_data():
     a=df['Dates']
     df=df.iloc[:,1:].astype('float')
     df.insert(0,'Dates', a)
-    df.to_csv('greek_stockdata.csv')
+    #df.to_csv('greek_stockdata.csv')
     df=df.reset_index()
     df=df.set_index('Dates')
     return df
