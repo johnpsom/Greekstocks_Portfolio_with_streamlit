@@ -68,7 +68,7 @@ def load_data():
             'MERKO.ATH','MIG.ATH','MIN.ATH','MOH.ATH','BELA.ATH','BRIQ.ATH','MYTIL.ATH','NEWS.ATH','OLTH.ATH','PPA.ATH',
             'OLYMP.ATH','OPAP.ATH','HTO.ATH','OTOEL.ATH','PAIR.ATH','PAP.ATH','PASAL.ATH','TPEIR.ATH','PERF.ENAX',
             'PETRO.ATH','PLAT.ATH','PLAIS.ATH','PLAKR.ATH','PPAK.ATH','PROF.ATH','REVOIL.ATH','SAR.ATH','SPACE.ATH',
-            'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH','FORTH.ATH','FTSE.ATH'          
+            'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH','FTSE.ATH'          
             ]
     i=1
     for stock in stocks:
@@ -176,7 +176,7 @@ stocks=['CENER.ATH','CNLCAP.ATH','TITC.ATH','AVAX.ATH','AVE.ATH','ADMIE.ATH','AL
             'MERKO.ATH','MIG.ATH','MIN.ATH','MOH.ATH','BELA.ATH','BRIQ.ATH','MYTIL.ATH','NEWS.ATH','OLTH.ATH','PPA.ATH',
             'OLYMP.ATH','OPAP.ATH','HTO.ATH','OTOEL.ATH','PAIR.ATH','PAP.ATH','PASAL.ATH','TPEIR.ATH','PERF.ENAX',
             'PETRO.ATH','PLAT.ATH','PLAIS.ATH','PLAKR.ATH','PPAK.ATH','PROF.ATH','REVOIL.ATH','SAR.ATH','SPACE.ATH',
-            'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH','FORTH.ATH'           
+            'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH'          
             ]
 st.set_page_config(layout="wide")
 st.title('Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ')
@@ -314,7 +314,7 @@ for s in ['CENER.ATH','CNLCAP.ATH','TITC.ATH','AVAX.ATH','AVE.ATH','ADMIE.ATH','
             'MERKO.ATH','MIG.ATH','MIN.ATH','MOH.ATH','BELA.ATH','BRIQ.ATH','MYTIL.ATH','NEWS.ATH','OLTH.ATH','PPA.ATH',
             'OLYMP.ATH','OPAP.ATH','HTO.ATH','OTOEL.ATH','PAIR.ATH','PAP.ATH','PASAL.ATH','TPEIR.ATH','PERF.ENAX',
             'PETRO.ATH','PLAT.ATH','PLAIS.ATH','PLAKR.ATH','PPAK.ATH','PROF.ATH','REVOIL.ATH','SAR.ATH','SPACE.ATH',
-            'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH','FORTH.ATH'           
+            'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH'          
             ]:
     stm.append(s)
     m_s.append(momentum_score(df_t[s]))
