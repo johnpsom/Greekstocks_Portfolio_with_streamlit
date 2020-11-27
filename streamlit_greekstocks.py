@@ -562,7 +562,7 @@ if c4.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 4',key=
         send_portfolio_byemail(filenm4,receiver_email4)
 
 #-----------------------------------------------use the stock screener
-
+'''
 index_df=pd.DataFrame()
 index_df['FTSE'] = data.iloc[:,-1]
 index_df['Percent Change'] = index_df['FTSE'].pct_change()
@@ -641,7 +641,8 @@ for metoxi in stocks:
     except Exception as e:
         st.write(e,"No data on "+stock)       
 
-c4.dataframe(df_screener)        
+c4.dataframe(df_screener)   
+'''
 #-----------------------------------------------
 st.subheader('Εαν έχετε προηγουμένως χρησιμοποιήσει την εφαρμογή και έχετε ζητήσει ένα Χαροφυλάκιο ανεβάστε το csv αρχείο στο παρακάτω πεδίο για να δείτε την απόδοσή του σήμερα.')    
 st.markdown(STYLE, unsafe_allow_html=True)
