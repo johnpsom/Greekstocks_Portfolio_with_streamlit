@@ -1,1 +1,1 @@
-# Greekstocks_Portfolio_with_streamlit
+# Greekstocks_Portfolio_with_streamlit [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/johnpsom/greekstocks_portfolio_with_streamlit/main/streamlit_greekstocks.py)
