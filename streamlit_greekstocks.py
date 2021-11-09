@@ -57,50 +57,47 @@ def get_file_type(file: Union[BytesIO, StringIO]) -> FileType:
 
 
 @st.cache(ttl=24*60*60)
-def load_data():
-    df=pd.DataFrame()
-    stocks=['CENER.ATH','CNLCAP.ATH','TITC.ATH','AVAX.ATH','AVE.ATH','ADMIE.ATH','ALMY.ATH','ALPHA.ATH','AEGN.ATH',
-            'ASCO.ATH','TATT.ATH','VIO.ATH','BIOSK.ATH','VOSYS.ATH','BYTE.ATH','GEBKA.ATH','GEKTERNA.ATH','PPC.ATH',
-            'DOMIK.ATH','EEE.ATH','EKTER.ATH','ELIN.ATH','TELL.ATH','ELLAKTOR.ATH','ELPE.ATH','ELTON.ATH','ELHA.ATH','ENTER.ATH',
-            'EPSIL.ATH','EYAPS.ATH','ETE.ATH','EYDAP.ATH','EUPIC.ATH','EUROB.ATH','EXAE.ATH','IATR.ATH','IKTIN.ATH','ILYDA.ATH',
-            'INKAT.ATH','INLOT.ATH','INTERCO.ATH','INTET.ATH','INTRK.ATH','KAMP.ATH','KEKR.ATH','KEPEN.ATH',
-            'KLM.ATH','KMOL.ATH','QUAL.ATH','QUEST.ATH','KRI.ATH','LAVI.ATH','LAMDA.ATH','KYLO.ATH','LYK.ATH','MEVA.ATH',
-            'MERKO.ATH','MIG.ATH','MIN.ATH','MOH.ATH','BELA.ATH','BRIQ.ATH','MYTIL.ATH','NEWS.ATH','OLTH.ATH','PPA.ATH',
-            'OLYMP.ATH','OPAP.ATH','HTO.ATH','OTOEL.ATH','PAIR.ATH','PAP.ATH','PASAL.ATH','TPEIR.ATH','PERF.ENAX',
-            'PETRO.ATH','PLAT.ATH','PLAIS.ATH','PLAKR.ATH','PPAK.ATH','PROF.ATH','REVOIL.ATH','SAR.ATH','SPACE.ATH',
-            'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH','FORTH.ATH','FTSE.ATH'          
-            ]
-    i=1
-    for stock in stocks:
+def load_data(tickers_gr):
+    greekstocks_data={}
+    close_data=pd.DataFrame()
+    for ticker in tickers_gr:
         dates=[]
+        open=[]
+        high=[]
+        low=[]
         close=[]
-        url='https://www.naftemporiki.gr/finance/Data/getHistoryData.aspx?symbol={}&type=csv'.format(stock)
+        volume=[]
+        url='https://www.naftemporiki.gr/finance/Data/getHistoryData.aspx?symbol={}&type=csv'.format(ticker)
         with closing(req.get(url, verify=True, stream=True)) as r:
             f = (line.decode('utf-8') for line in r.iter_lines())
             reader = csv.reader(f, delimiter=';')
             for row in reader:
                 dates.append(row[0])
+                row[1]=row[1].replace(',','.')
+                open.append(row[1])
+                row[2]=row[2].replace(',','.')
+                high.append(row[2])
+                row[3]=row[3].replace(',','.')
+                low.append(row[3])
                 row[4]=row[4].replace(',','.')
                 close.append(row[4])
-                
+                row[5]=row[5].replace(',','.')
+                volume.append(row[5])
         del dates[0]
+        del open[0]
+        del high[0]
+        del low[0]
         del close[0]
-        df_temp=pd.DataFrame({'Dates':dates, stock:close})
-        #df_temp=df_temp.apply(lambda x: x.str.replace(',','.'))
-        df_temp=df_temp.tail(600)
-        if i>1:
-            df=df.join(df_temp.set_index('Dates'), on='Dates',how='inner')
-        if i==1:
-            df=df_temp
-            i=i+1
-           
-    a=df['Dates']
-    df=df.iloc[:,1:].astype('float')
-    df.insert(0,'Dates', a)
-    #df.to_csv('greek_stockdata.csv')
-    df=df.reset_index()
-    df=df.set_index('Dates')
-    return df
+        del volume[0]
+        df_temp=pd.DataFrame({'date':dates, 'open':open, 'high':high,'low':low,'close':close,'volume':volume})
+        df_temp.iloc[:,1]=df_temp.iloc[:,1].astype(float)
+        df_temp['date'] =pd.to_datetime(df_temp['date'],format="%d/%m/%Y")
+        df_temp.iloc[:,1:]=df_temp.iloc[:,1:].astype(float)
+        data=df_temp.reset_index(drop=True)#
+        #print(ticker,len(data))
+        greekstocks_data[ticker]=data
+        close_data=greekstocks_data[ticker]['close']
+    return greekstocks_data,close_data
 
 # Momentum score function
 def momentum_score(ts):
@@ -167,17 +164,20 @@ def send_portfolio_byemail(filename, receiver_email):
     return        
 
 #stock universe 
-stocks=['CENER.ATH','CNLCAP.ATH','TITC.ATH','AVAX.ATH','AVE.ATH','ADMIE.ATH','ALMY.ATH','ALPHA.ATH','AEGN.ATH',
-            'ASCO.ATH','TATT.ATH','VIO.ATH','BIOSK.ATH','VOSYS.ATH','BYTE.ATH','GEBKA.ATH','GEKTERNA.ATH','PPC.ATH',
-            'DOMIK.ATH','EEE.ATH','EKTER.ATH','ELIN.ATH','TELL.ATH','ELLAKTOR.ATH','ELPE.ATH','ELTON.ATH','ELHA.ATH','ENTER.ATH',
-            'EPSIL.ATH','EYAPS.ATH','ETE.ATH','EYDAP.ATH','EUPIC.ATH','EUROB.ATH','EXAE.ATH','IATR.ATH','IKTIN.ATH','ILYDA.ATH',
-            'INKAT.ATH','INLOT.ATH','INTERCO.ATH','INTET.ATH','INTRK.ATH','KAMP.ATH','KEKR.ATH','KEPEN.ATH',
-            'KLM.ATH','KMOL.ATH','QUAL.ATH','QUEST.ATH','KRI.ATH','LAVI.ATH','LAMDA.ATH','KYLO.ATH','LYK.ATH','MEVA.ATH',
-            'MERKO.ATH','MIG.ATH','MIN.ATH','MOH.ATH','BELA.ATH','BRIQ.ATH','MYTIL.ATH','NEWS.ATH','OLTH.ATH','PPA.ATH',
-            'OLYMP.ATH','OPAP.ATH','HTO.ATH','OTOEL.ATH','PAIR.ATH','PAP.ATH','PASAL.ATH','TPEIR.ATH','PERF.ENAX',
-            'PETRO.ATH','PLAT.ATH','PLAIS.ATH','PLAKR.ATH','PPAK.ATH','PROF.ATH','REVOIL.ATH','SAR.ATH','SPACE.ATH',
-            'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH','FORTH.ATH'          
-            ]
+stocks=[ 'AEGN.ATH', 'AETF.ATH', 'ALMY.ATH', 'ALPHA.ATH', 'ANDRO.ATH', 'ANEK.ATH', 'ASCO.ATH',
+     'ASTAK.ATH', 'ATEK.ATH', 'ATRUST.ENAX', 'ATTICA.ATH', 'AVAX.ATH', 'AVE.ATH', 'BELA.ATH', 'BIOKA.ATH',
+     'BIOSK.ATH', 'BIOT.ATH', 'BRIQ.ATH', 'BYTE.ATH', 'CENER.ATH',  'CRETA.ATH', 'DAIOS.ATH', 'DOMIK.ATH',
+     'DROME.ATH', 'DUR.ATH', 'EEE.ATH', 'EKTER.ATH', 'ELBE.ATH', 'ELBIO.ATH', 'ELHA.ATH', 'ELIN.ATH', 'ELLAKTOR.ATH',
+     'ELPE.ATH', 'ELSTR.ATH', 'ELTON.ATH', 'ENTER.ATH', 'EPSIL.ATH', 'ETE.ATH', 'EUPIC.ATH', 'EUROB.ATH', 'EVROF.ATH',
+     'EXAE.ATH', 'EYAPS.ATH', 'EYDAP.ATH', 'FIER.ATH', 'FLEXO.ATH', 'FOODL.ENAX', 'FOYRK.ATH', 'GEBKA.ATH', 'GEKTERNA.ATH',
+     'HTO.ATH', 'IATR.ATH', 'IKTIN.ATH', 'ILYDA.ATH', 'INKAT.ATH', 'INLOT.ATH', 'INTERCO.ATH', 'INTET.ATH', 'INTRK.ATH',
+     'KAMP.ATH', 'KEKR.ATH', 'KEPEN.ATH', 'KLM.ATH', 'KMOL.ATH', 'KORDE.ATH', 'KREKA.ATH', 'KRI.ATH', 'KTILA.ATH',
+     'KYLO.ATH', 'KYRI.ATH', 'LAMDA.ATH', 'LANAC.ATH', 'LAVI.ATH', 'LEBEK.ATH', 'LOGISMOS.ATH', 'LYK.ATH', 'MATHIO.ATH', 'MEDIC.ATH',
+     'MERKO.ATH', 'MEVA.ATH', 'MIG.ATH', 'MIN.ATH', 'MOH.ATH', 'MYTIL.ATH', 'OLTH.ATH', 'OLYMP.ATH', 'OPAP.ATH', 'OTOEL.ATH',
+     'PAIR.ATH', 'PAP.ATH', 'PERF.ENAX', 'PETRO.ATH', 'PLAIS.ATH', 'PLAKR.ATH', 'PLAT.ATH', 'PPA.ATH',
+     'PROF.ATH', 'QUAL.ATH', 'QUEST.ATH', 'REVOIL.ATH', 'SAR.ATH', 'SPACE.ATH', 'SPIR.ATH', 'TATT.ATH',
+     'TELL.ATH', 'TENERGY.ATH',  'TPEIR.ATH', 'TRASTOR.ATH', 'VARG.ATH', 'VARNH.ATH', 'VIDAVO.ENAX', 'VIO.ATH',
+     'VIS.ATH', 'VOSYS.ATH', 'YALCO.ATH','ADMIE.ATH','PPC.ATH']
 st.set_page_config(layout="wide")
 st.title('Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ')
 data_load_state = st.text('Loading data...')
