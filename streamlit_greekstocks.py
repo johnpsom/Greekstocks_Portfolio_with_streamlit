@@ -322,7 +322,7 @@ sto=[]
 for s in stocks:
     sto.append(s)
     m_s.append(momentum_score(df_tr[s].tail(momentum_window)))
-df_m['stock']=st
+df_m['stock']=sto
 df_m['momentum']=m_s
 dev=df_m['momentum'].std()
 # Get the top momentum stocks for the period
