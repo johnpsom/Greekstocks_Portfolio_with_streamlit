@@ -22,7 +22,6 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import parseaddr
-
 from enum import Enum
 from io import BytesIO, StringIO
 from typing import Union
@@ -203,8 +202,6 @@ def send_portfolio_byemail(filename, receiver_email):
     port =465 # For starttls
     gmail_user = st.secrets["sender_email"]
     gmail_password = st.secrets["password"]
-    st.write(gmail_user)
-    st.write(gmail_password)
     subject = "Το Χαρτοφυλάκιό σου"
     body = "Λαμβάνεις αυτό το μύνημα διότι έφτιαξες ένα χαρτοφυλάκιο και ζήτησες να σου αποσταλεί. Βρες στο συνημμένο αρχείο το χαρτοφυλάκιο που έχεις φτιάξει."
     # Create a multipart message and set headers
@@ -212,7 +209,6 @@ def send_portfolio_byemail(filename, receiver_email):
     message["From"] = gmail_user
     message["To"] = receiver_email
     message["Subject"] = subject
-    
     # Add body to email
     message.attach(MIMEText(body, "plain"))
     # Open file=filename in binary mode
@@ -221,26 +217,21 @@ def send_portfolio_byemail(filename, receiver_email):
         # Email client can usually download this automatically as attachment
         part = MIMEBase("application", "octet-stream")
         part.set_payload(attachment.read())
-    
     # Encode file in ASCII characters to send by email    
     encoders.encode_base64(part)
-    
     # Add header as key/value pair to attachment part
-    part.add_header("Content-Disposition",
-        f"attachment; filename= {filename}",
-    )
-    
+    part.add_header("Content-Disposition",f"attachment; filename= {filename}")
     # Add attachment to message and convert message to string
     message.attach(part)
     email_text = message.as_string()
     
-    # Log in to server using secure context and send email
-    server = smtplib.SMTP(smtp_server, port)
-    server.ehlo()
-    server.starttls()
-    server.login(gmail_user, gmail_password)
+    
+    #Create SMTP session for sending the mail
+    session = smtplib.SMTP('smtp.gmail.com', 587) #use gmail with port
+    session.starttls() #enable security
+    session.login(gmail_user, gmail_password) #login with mail_id and password
     server.sendmail(gmail_user, receiver_email , email_text)
-    server.close()
+    session.quit()
     st.write('Αποστολή email OK!')
     
     return        
