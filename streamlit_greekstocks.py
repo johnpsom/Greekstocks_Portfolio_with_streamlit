@@ -224,11 +224,11 @@ def send_portfolio_byemail(filename, receiver_email):
     # Add attachment to message and convert message to string
     message.attach(part)
     email_text = message.as_string()
-    
-    
     #Create SMTP session for sending the mail
-    session = smtplib.SMTP('smtp.gmail.com', 587) #use gmail with port
-    session.starttls() #enable security
+    server = smtplib.SMTP('smtp.gmail.com:587')
+    server.ehlo_or_helo_if_needed()
+    server.starttls()
+    server.ehlo_or_helo_if_needed()
     session.login(gmail_user, gmail_password) #login with mail_id and password
     server.sendmail(gmail_user, receiver_email , email_text)
     session.quit()
