@@ -375,26 +375,25 @@ for symbol, num_shares in allocation.items():
     num_shares_list.append(num_shares)
     l_price.append(latest_prices[symbol])
     tot_cash.append(num_shares*latest_prices[symbol])
-    st.write(symbol)
+    
     
 df_buy=pd.DataFrame()
 df_buy['stock']=symbol_list
-
 df_buy['weights']=w
 df_buy['shares']=num_shares_list
 df_buy['price']=l_price
 df_buy['value']=tot_cash
-df_buy=df_buy.append({'stock':'CASH','momentum':0,'weights': round(1-df_buy['value'].sum()/port_value,2),'shares':1,'price':round(port_value-df_buy['value'].sum(),2),'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
+df_buy=df_buy.append({'stock':'CASH','weights': round(1-df_buy['value'].sum()/port_value,2),'shares':1,'price':round(port_value-df_buy['value'].sum(),2),'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
 df_buy=df_buy.set_index('stock')
 st.dataframe(df_buy)
 st.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buy['value'].sum(),100*df_buy['value'].sum()/port_value))
 st.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buy['value'].sum(),100-100*df_buy['value'].sum()/port_value))
 st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
-filenm=c1.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio1",key=1)
-receiver_email=c1.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=2)
+filenm=st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio1",key=1)
+receiver_email=st.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=2)
 filenm=filenm+'.csv'
 df_buy.to_csv(filenm)
-if c1.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1',key=1):
+if st.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1',key=1):
     if '@' in parseaddr(receiver_email)[1]:
         send_portfolio_byemail(filenm,receiver_email)
 
