@@ -107,6 +107,69 @@ def momentum_score(ts):
     annualized_slope = (np.power(np.exp(regress[0]), 252) -1) * 100
     return annualized_slope * (regress[2] ** 2)
 
+
+def capm_returns(prices, market_prices=None, returns_data=False, risk_free_rate=0.02, \
+                 compounding=True, frequency=252):
+    """
+    Compute a return estimate using the Capital Asset Pricing Model. Under the CAPM,
+    asset returns are equal to market returns plus a :math:`\beta` term encoding
+    the relative risk of the asset.
+    .. math::
+        R_i = R_f + \\beta_i (E(R_m) - R_f)
+    :param prices: adjusted closing prices of the asset, each row is a date
+                    and each column is a ticker/id.
+    :type prices: pd.DataFrame
+    :param market_prices: adjusted closing prices of the benchmark, defaults to None
+    :type market_prices: pd.DataFrame, optional
+    :param returns_data: if true, the first arguments are returns instead of prices.
+    :type returns_data: bool, defaults to False.
+    :param risk_free_rate: risk-free rate of borrowing/lending, defaults to 0.02.
+                           You should use the appropriate time period, corresponding
+                           to the frequency parameter.
+    :type risk_free_rate: float, optional
+    :param compounding: computes geometric mean returns if True,
+                        arithmetic otherwise, optional.
+    :type compounding: bool, defaults to True
+    :param frequency: number of time periods in a year, defaults to 252 (the number
+                        of trading days in a year)
+    :type frequency: int, optional
+    :return: annualised return estimate
+    :rtype: pd.Series
+    """
+    if not isinstance(prices, pd.DataFrame):
+        warnings.warn("prices are not in a dataframe", RuntimeWarning)
+        prices = pd.DataFrame(prices)
+    if returns_data:
+        returns = prices
+        market_returns = market_prices
+    else:
+        returns = returns_from_prices(prices)
+        if market_prices is not None:
+            market_returns = returns_from_prices(market_prices)
+        else:
+            market_returns = None
+    # Use the equally-weighted dataset as a proxy for the market
+    if market_returns is None:
+        # Append market return to right and compute sample covariance matrix
+        returns["mkt"] = returns.mean(axis=1)
+    else:
+        market_returns.columns = ["mkt"]
+        returns = returns.join(market_returns, how="left")
+    # Compute covariance matrix for the new dataframe (including markets)
+    cov = returns.cov()
+    # The far-right column of the cov matrix is covariances to market
+    betas = cov["mkt"] / cov.loc["mkt", "mkt"]
+    betas = betas.drop("mkt")
+    # Find mean market return on a given time period
+    if compounding:
+        mkt_mean_ret = (1 + returns["mkt"]).prod() ** (
+            frequency / returns["mkt"].count()
+        ) - 1
+    else:
+        mkt_mean_ret = returns["mkt"].mean() * frequency
+    # CAPM formula
+    return risk_free_rate + betas * (mkt_mean_ret - risk_free_rate)
+
 #select stocks columns
 def select_columns(data_frame, column_names):
     new_frame = data_frame.loc[:, column_names]
@@ -239,16 +302,16 @@ weightsmo=st.sidebar.checkbox('Επιλεγμένο επιλέγει τον υπ
 allocmo=st.sidebar.checkbox('Επιλεγμένο επιλέγει τον υπολογισμό του μοντέλου του greedy_portfolio αλλιώς επιλέγει το lp_portfolio.',value=True)
 cutoff=st.sidebar.slider('Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.30, 0.10)
 
-c1,c2,c3,c4= st.beta_columns((1,1,1,1))
+
 #-----Χαρτοφυλάκιο Νο1 γενικό
 #Calculate portofolio mu and S
-mu = expected_returns.mean_historical_return(df_t)
+mu =capm(df_t)
 if riskmo:
     S = CovarianceShrinkage(df_t).ledoit_wolf()
 else:
     S = risk_models.sample_cov(df_t)
 # Optimise the portfolio 
-ef = EfficientFrontier(mu, S, gamma=2) # Use regularization (gamma=1)
+ef = EfficientFrontier(mu, S, gamma=1) # Use regularization (gamma=1)
 if weightsmo:
     weights = ef.max_sharpe()
 else:
@@ -256,19 +319,18 @@ else:
 cleaned_weights = ef.clean_weights(cutoff=cutoff,rounding=3)
 ef.portfolio_performance()
 
-c1.subheader('Χαρτοφυλάκιο Νο1')
-c1.write('Το προτινόμενο χαρτοφυλάκιο από τις ιστορικές τιμές των επιλεγμένων μετοχών έχει τα παρακάτω χαρακτηριστικά')
-c1.write('Αρχική Αξία Χαρτοφυλακίου : '+str(port_value)+'€')
-c1.write('Sharpe Ratio: '+str(round(ef.portfolio_performance()[2],2)))
-c1.write('Απόδοση Χαρτοφυλακίο: '+str(round(ef.portfolio_performance()[0]*100,2))+'%')
-c1.write('Μεταβλητότητα Χαρτοφυλακίου: '+str(round(ef.portfolio_performance()[1]*100,2))+'%')
+st.subheader('Χαρτοφυλάκιο Νο1')
+st.write('Το προτινόμενο χαρτοφυλάκιο από τις ιστορικές τιμές των επιλεγμένων μετοχών έχει τα παρακάτω χαρακτηριστικά')
+st.write('Αρχική Αξία Χαρτοφυλακίου : '+str(port_value)+'€')
+st.write('Sharpe Ratio: '+str(round(ef.portfolio_performance()[2],2)))
+st.write('Απόδοση Χαρτοφυλακίο: '+str(round(ef.portfolio_performance()[0]*100,2))+'%')
+st.write('Μεταβλητότητα Χαρτοφυλακίου: '+str(round(ef.portfolio_performance()[1]*100,2))+'%')
 # Allocate
 latest_prices = get_latest_prices(df_t)
-da =DiscreteAllocation(
-    cleaned_weights,
-    latest_prices,
-    total_portfolio_value=port_value
-    )
+da =DiscreteAllocation( cleaned_weights,
+                        latest_prices,
+                        total_portfolio_value=port_value
+                        )
 if allocmo:
     allocation = da.greedy_portfolio()[0]
     non_trading_cash=da.greedy_portfolio()[1]
@@ -276,30 +338,34 @@ else:
     allocation = da.lp_portfolio()[0]
     non_trading_cash=da.lp_portfolio()[1]
 # Put the stocks and the number of shares from the portfolio into a df
+# Put the stocks and the number of shares from the portfolio into a df
 symbol_list = []
-cw=[]
+mom=[]
+w=[]
 num_shares_list = []
 l_price=[]
 tot_cash=[]
 for symbol, num_shares in allocation.items():
     symbol_list.append(symbol)
-    cw.append(round(cleaned_weights[symbol],3))
+    mom.append(df_m[df_m['stock']==symbol].values[0])
+    w.append(cleaned_weights[symbol])
     num_shares_list.append(num_shares)
-    l_price.append(round(latest_prices[symbol],2))
-    tot_cash.append(round(num_shares*latest_prices[symbol],2))
-    
+    l_price.append(latest_prices[symbol])
+    tot_cash.append(num_shares*latest_prices[symbol])
+
 df_buy=pd.DataFrame()
 df_buy['stock']=symbol_list
-df_buy['weights']=cw
+df_buy['momentum']=mom
+df_buy['weights']=w
 df_buy['shares']=num_shares_list
 df_buy['price']=l_price
 df_buy['value']=tot_cash
-
-c1.write(df_buy)
-c1.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buy['value'].sum(),100*df_buy['value'].sum()/port_value))
-c1.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buy['value'].sum(),100-100*df_buy['value'].sum()/port_value))
-df_buy=df_buy.append({'stock':'CASH','weights': round(1-df_buy['value'].sum()/port_value,2),'shares':0,'price':0,'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
-c1.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
+df_buy=df_buy.append({'stock':'CASH','momentum':0,'weights': round(1-df_buy['value'].sum()/port_value,2),'shares':1,'price':round(port_value-df_buy['value'].sum(),2),'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
+df_buy=df_buy.set_index('stock')
+st.write(df_buy)
+st.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buy['value'].sum(),100*df_buy['value'].sum()/port_value))
+st.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buy['value'].sum(),100-100*df_buy['value'].sum()/port_value))
+st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
 filenm=c1.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio1",key=1)
 receiver_email=c1.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=2)
 filenm=filenm+'.csv'
@@ -307,275 +373,7 @@ df_buy.to_csv(filenm)
 if c1.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1',key=1):
     if '@' in parseaddr(receiver_email)[1]:
         send_portfolio_byemail(filenm,receiver_email)
-        
-#------Χαρτοφυλάκιο Νο2
-st.sidebar.write('Παράμετροι για το Χαρτοφυλάκιο Νο2')
-c2.subheader('Χαρτοφυλάκιο Νο2')
-c2.write('Θα γίνει ο ίδιος υπολογισμός αλλά ξεκινώντας από μικρότερο πλήθος μετοχών από τις αρχικές με βάση '+
-         'τον υπολογισμό ενός δείκτη momentum και την κατάταξη των μετοχών σε φθίνουσα σειρά.'+
-         ' Κατόπιν ο υπολογισμός του χαρτοφυλακίου έχει τις ίδιες επιλογές με το παραπάνω')
-ps=st.sidebar.slider('Υπολογισμός με βάση αρχικά επιλεγμένο πλήθος μετοχών',5,30,15)
-mom=st.sidebar.slider('Επιλογή με βάση την τιμή του mom',0,6,5)
-portfolio_size=ps
-#Calculate momentum and put the values in a dataframe
-df_m=pd.DataFrame()
-m_s=[]
-stm=[]
-for s in ['CENER.ATH','CNLCAP.ATH','TITC.ATH','AVAX.ATH','AVE.ATH','ADMIE.ATH','ALMY.ATH','ALPHA.ATH','AEGN.ATH',
-            'ASCO.ATH','TATT.ATH','VIO.ATH','BIOSK.ATH','VOSYS.ATH','BYTE.ATH','GEBKA.ATH','GEKTERNA.ATH','PPC.ATH',
-            'DOMIK.ATH','EEE.ATH','EKTER.ATH','ELIN.ATH','TELL.ATH','ELLAKTOR.ATH','ELPE.ATH','ELTON.ATH','ELHA.ATH','ENTER.ATH',
-            'EPSIL.ATH','EYAPS.ATH','ETE.ATH','EYDAP.ATH','EUPIC.ATH','EUROB.ATH','EXAE.ATH','IATR.ATH','IKTIN.ATH','ILYDA.ATH',
-            'INKAT.ATH','INLOT.ATH','INTERCO.ATH','INTET.ATH','INTRK.ATH','KAMP.ATH','KEKR.ATH','KEPEN.ATH',
-            'KLM.ATH','KMOL.ATH','QUAL.ATH','QUEST.ATH','KRI.ATH','LAVI.ATH','LAMDA.ATH','KYLO.ATH','LYK.ATH','MEVA.ATH',
-            'MERKO.ATH','MIG.ATH','MIN.ATH','MOH.ATH','BELA.ATH','BRIQ.ATH','MYTIL.ATH','NEWS.ATH','OLTH.ATH','PPA.ATH',
-            'OLYMP.ATH','OPAP.ATH','HTO.ATH','OTOEL.ATH','PAIR.ATH','PAP.ATH','PASAL.ATH','TPEIR.ATH','PERF.ENAX',
-            'PETRO.ATH','PLAT.ATH','PLAIS.ATH','PLAKR.ATH','PPAK.ATH','PROF.ATH','REVOIL.ATH','SAR.ATH','SPACE.ATH',
-            'SPIR.ATH','TENERGY.ATH','TRASTOR.ATH','FLEXO.ATH','FOYRK.ATH','FORTH.ATH'          
-            ]:
-    stm.append(s)
-    m_s.append(momentum_score(df_t[s]))
-df_m['stock']=stm    
-df_m['momentum'] = m_s
-# Get the top momentum stocks for the period
-df_m = df_m.sort_values(by='momentum', ascending=False).head(portfolio_size)
-if mom==1:
-    df_m=df_m[df_m['momentum']> df_m['momentum'].mean()-df_m['momentum'].std()]
-if mom==2:
-    df_m=df_m[df_m['momentum']> df_m['momentum'].mean()]
-if mom==3:
-    df_m=df_m[df_m['momentum']< df_m['momentum'].mean()+0.5*df_m['momentum'].std()]
-if mom==4:
-    df_m=df_m[df_m['momentum']< df_m['momentum'].mean()+df_m['momentum'].std()]    
-if mom==5: 
-    df_m=df_m[df_m['momentum']> 0]
-if mom==6:
-    df_m=df_m[df_m['momentum']< df_m['momentum'].mean()]
-#print(df_m)
-# Set the universe to the top momentum stocks for the period
-universe = df_m['stock'].tolist()
-# Create a df with just the stocks from the universe
-df_tr = select_columns(df_t, universe)
 
-#Calculate portofolio mu and S
-mum = expected_returns.mean_historical_return(df_tr)
-if riskmo:
-    Sm = CovarianceShrinkage(df_tr).ledoit_wolf()
-else:
-    Sm = risk_models.sample_cov(df_tr)
-# Optimise the portfolio 
-efm = EfficientFrontier(mum, Sm, gamma=2) 
-
-if weightsmo:
-    weightsm = efm.max_sharpe()
-else:
-    #efm.add_objective(objective_functions.L2_reg, gamma=2)# Use regularization (gamma=1)
-    weightsm = efm.min_volatility()
-cleaned_weightsm = efm.clean_weights(cutoff=cutoff,rounding=3)
-efm.portfolio_performance()
-# Allocate
-latest_pricesm = get_latest_prices(df_tr)
-dam=DiscreteAllocation(
-    cleaned_weightsm,
-    latest_pricesm,
-    total_portfolio_value=port_value
-    )
-if allocmo:
-    allocationm = dam.greedy_portfolio()[0]
-    non_trading_cashm=dam.greedy_portfolio()[1]
-else:
-    allocationm = dam.lp_portfolio()[0]
-    non_trading_cashm=dam.lp_portfolio()[1]
-# Put the stocks and the number of shares from the portfolio into a df
-symbol_listm = []
-mom=[]
-cwm=[]
-num_shares_listm = []
-l_pricem=[]
-tot_cashm=[]
-for symbolm, num_sharesm in allocationm.items():
-    symbol_listm.append(symbolm)
-    cwm.append(round(cleaned_weightsm[symbolm],3))
-    num_shares_listm.append(num_sharesm)
-    l_pricem.append(round(latest_pricesm[symbolm],2))
-    tot_cashm.append(round(num_sharesm*latest_pricesm[symbolm],2))
-  
-df_buym=pd.DataFrame()
-df_buym['stock']=symbol_listm
-df_buym['weights']=cwm
-df_buym['shares']=num_shares_listm
-df_buym['price']=l_pricem
-df_buym['value']=tot_cashm
-
-c2.write("Το προτινόμενο χαρτοφυλάκιο έχει τα παρακάτω χαρακτηριστικά")
-c2.write('Αρχική Αξία Χαρτοφυλακίου : '+str(port_value)+'€')
-c2.write('Sharpe Ratio: '+str(round(efm.portfolio_performance()[2],2)))
-c2.write('Απόδοση Χαρτοφυλακίου: '+str(round(efm.portfolio_performance()[0]*100,2))+'%')
-c2.write('Μεταβλητότητα Χαρτοφυλακίου: '+str(round(efm.portfolio_performance()[1]*100,2))+'%')
-c2.write(df_buym)
-c2.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buym['value'].sum(),100*df_buym['value'].sum()/port_value))
-c2.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buym['value'].sum(),100-100*df_buym['value'].sum()/port_value))
-df_buym=df_buym.append({'stock':'CASH','weights': round(1-df_buym['value'].sum()/port_value,2),'shares':0,'price':0,'value':round(port_value-df_buym['value'].sum(),2)}, ignore_index=True)
-c2.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
-filenm2=c2.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio2",key=1)
-receiver_email2=c2.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=4)
-filenm2=filenm2+'.csv'
-df_buym.to_csv(filenm2)
-if c2.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 2',key=2):
-    if '@' in parseaddr(receiver_email)[1]:
-        send_portfolio_byemail(filenm2,receiver_email2)
-
-#-----------------------------------------
-st.sidebar.write('Παράμετροι για το Χαρτοφυλάκιο Νο3')
-c3.subheader('Χαρτοφυλάκιο Νο3')
-c3.write('Το προτεινόμενο χαρτοφυλάκιο με τις μετοχές ελάχιστης συσχέτισης έχει τα παρακάτω χαρακτηριστικά')
-me=st.sidebar.slider('Από Πόσες μετοχές ελάχιστης συσχέτισης? ',5,50,20,1)
-c3.write('Αρχική Αξία Χαρτοφυλακίου : '+str(port_value)+'€')
-highest_corr = corr_table.sort_values("abs_value",ascending = True).head(me)
-hi_corr_stocks_list=list(set(list(highest_corr['stock1'])) | set(highest_corr['stock2']))
-hi_corr_universe = hi_corr_stocks_list
-# Create a df with just the stocks from the universe
-df_hicorr = select_columns(df_t, hi_corr_universe)
-muh = expected_returns.mean_historical_return(df_hicorr)
-if riskmo:
-    Sh = CovarianceShrinkage(df_hicorr).ledoit_wolf()
-else:
-    Sh = risk_models.sample_cov(df_hicorr)
-# Optimise the portfolio 
-efh = EfficientFrontier(muh, Sh, gamma=2) # Use regularization (gamma=1)
-if weightsmo:
-    weightsh = efh.max_sharpe()
-else:
-    weightsh = efh.min_volatility()
-cleaned_weightsh = efh.clean_weights(cutoff=cutoff,rounding=3)
-efh.portfolio_performance()
-
-c3.write('Sharpe Ratio: '+str(round(efh.portfolio_performance()[2],2)))
-c3.write('Απόδοση Χαρτοφυλακίο: '+str(round(efh.portfolio_performance()[0]*100,2))+'%')
-c3.write('Μεταβλητότητα Χαρτοφυλακίου: '+str(round(efh.portfolio_performance()[1]*100,2))+'%')
-# Allocate
-latest_pricesh = get_latest_prices(df_hicorr)
-dah =DiscreteAllocation(
-    cleaned_weightsh,
-    latest_pricesh,
-    total_portfolio_value=port_value
-    )
-if allocmo:
-    allocationh = dah.greedy_portfolio()[0]
-    non_trading_cashh=dah.greedy_portfolio()[1]
-else:
-    allocationh = dah.lp_portfolio()[0]
-    non_trading_cashh=dah.lp_portfolio()[1]
-# Put the stocks and the number of shares from the portfolio in a df
-symbol_listh = []
-cwh=[]
-num_shares_listh = []
-l_priceh=[]
-tot_cashh=[]
-for symbolh, num_sharesh in allocationh.items():
-    symbol_listh.append(symbolh)
-    cwh.append(round(cleaned_weightsh[symbolh],3))
-    num_shares_listh.append(num_sharesh)
-    l_priceh.append(round(latest_pricesh[symbolh],2))
-    tot_cashh.append(round(num_sharesh*latest_pricesh[symbolh],2))
-    
-df_buyh=pd.DataFrame()
-df_buyh['stock']=symbol_listh
-df_buyh['weights']=cwh
-df_buyh['shares']=num_shares_listh
-df_buyh['price']=l_priceh
-df_buyh['value']=tot_cashh
-
-c3.write(df_buyh)
-c3.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buyh['value'].sum(),100*df_buyh['value'].sum()/port_value))
-c3.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buyh['value'].sum(),100-100*df_buyh['value'].sum()/port_value))
-df_buyh=df_buyh.append({'stock':'CASH','weights': round(1-df_buyh['value'].sum()/port_value,2),'shares':0,'price':0,'value':round(port_value-df_buyh['value'].sum(),2)}, ignore_index=True)
-c3.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
-filenm3=c3.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio3",key=1)
-receiver_email3=c3.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=6)
-filenm3=filenm3+'.csv'
-df_buyh.to_csv(filenm3)
-if c3.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 3',key=3):
-    if '@' in parseaddr(receiver_email)[1]:
-        send_portfolio_byemail(filenm3,receiver_email3)
-
-#-----Χαρτοφυλάκιο Νο4-------------------------------
-st.sidebar.write('Παράμετροι για το Χαρτοφυλάκιο Νο4')
-c4.subheader('Χαρτοφυλάκιο Νο4')
-c4.write('Το προτεινόμενο χαρτοφυλάκιο με τις μετοχές μέγιστης κεφαλοποιημένης απόδοσης για τις Χ ημέρες έχει τα παρακάτω χαρακτηριστικά')
-mc=st.sidebar.slider('Από μετοχές ελάχιστης συσσωρευμένης απόδοσης τουλάχιστον Ν% στις τελευταίες Χ ημέρες.',0,int(max_ret),10,1)
-c4.write('Αρχική Αξία Χαρτοφυλακίου : '+str(port_value)+'€')
-c4.write('Επιλέγουμε από μετοχές με συσσωρευμένη απόδοση τουλάχιστον '+str(mc)+'%')
-mc=float(mc/100+1)
-m_c=[]
-for rw in stocks:
-    if float(m_cum_ret[rw])>=mc:
-        m_c.append(rw)
-hi_cum_universe=m_c
-
-# Create a df with just the stocks from the universe
-df_cum = select_columns(df_t, hi_cum_universe)
-muc = expected_returns.mean_historical_return(df_cum)
-if riskmo:
-    Sc = CovarianceShrinkage(df_cum).ledoit_wolf()
-else:
-    Sc = risk_models.sample_cov(df_cum)
-# Optimise the portfolio 
-efc = EfficientFrontier(muc, Sc, gamma=2) # Use regularization (gamma=1)
-if weightsmo:
-    weightsc = efc.max_sharpe()
-else:
-    weightsc = efc.min_volatility()
-cleaned_weightsc = efc.clean_weights(cutoff=cutoff,rounding=3)
-efc.portfolio_performance()
-
-c4.write('Sharpe Ratio: '+str(round(efc.portfolio_performance()[2],2)))
-c4.write('Απόδοση Χαρτοφυλακίο: '+str(round(efc.portfolio_performance()[0]*100,2))+'%')
-c4.write('Μεταβλητότητα Χαρτοφυλακίου: '+str(round(efc.portfolio_performance()[1]*100,2))+'%')
-# Allocate
-latest_pricesc = get_latest_prices(df_cum)
-dac =DiscreteAllocation(
-    cleaned_weightsc,
-    latest_pricesc,
-    total_portfolio_value=port_value
-    )
-if allocmo:
-    allocationc = dac.greedy_portfolio()[0]
-    non_trading_cashc=dac.greedy_portfolio()[1]
-else:
-    allocationc = dac.lp_portfolio()[0]
-    non_trading_cashc=dac.lp_portfolio()[1]
-# Put the stocks and the number of shares from the portfolio in a df
-symbol_listc = []
-cwc =[]
-num_shares_listc = []
-l_pricec=[]
-tot_cashc=[]
-for symbolc, num_sharesc in allocationc.items():
-    symbol_listc.append(symbolc)
-    cwc.append(round(cleaned_weightsc[symbolc],3))
-    num_shares_listc.append(num_sharesc)
-    l_pricec.append(round(latest_pricesc[symbolc],2))
-    tot_cashc.append(round(num_sharesc*latest_pricesc[symbolc],2))
-    
-df_buyc=pd.DataFrame()
-df_buyc['stock']=symbol_listc
-df_buyc['weights']=cwc
-df_buyc['shares']=num_shares_listc
-df_buyc['price']=l_pricec
-df_buyc['value']=tot_cashc
-
-c4.write(df_buyc)
-c4.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buyc['value'].sum(),100*df_buyc['value'].sum()/port_value))
-c4.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buyc['value'].sum(),100-100*df_buyc['value'].sum()/port_value))
-df_buyc=df_buyc.append({'stock':'CASH','weights': round(1-df_buyc['value'].sum()/port_value,2),'shares':0,'price':0,'value':round(port_value-df_buyc['value'].sum(),2)}, ignore_index=True)
-c4.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
-filenm4=c4.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio4",key=1)
-receiver_email4=c4.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=8)
-filenm4=filenm4+'.csv'
-df_buyc.to_csv(filenm4)
-if c4.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 4',key=4):
-    if '@' in parseaddr(receiver_email)[1]:
-        send_portfolio_byemail(filenm4,receiver_email4)
 
 
 st.subheader('Εαν έχετε προηγουμένως χρησιμοποιήσει την εφαρμογή και έχετε ζητήσει ένα Χαροφυλάκιο ανεβάστε το csv αρχείο στο παρακάτω πεδίο για να δείτε την απόδοσή του σήμερα.')    
