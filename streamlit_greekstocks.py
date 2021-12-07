@@ -201,8 +201,8 @@ def cumulative_returns(stock,returns):
 def send_portfolio_byemail(filename, receiver_email):
     smtp_server = "smtp.gmail.com"
     port =465 # For starttls
-    sender_email = sender_email
-    password = password
+    sender_email = st.secrets["sender_email"]
+    password = st.secrets["password"]
     subject = "Το Χαρτοφυλάκιό σου"
     body = "Βρες στο συνημμένο αρχείο το χαρτοφυλάκιο που έχεις φτιάξει."
     # Create a multipart message and set headers
@@ -210,7 +210,7 @@ def send_portfolio_byemail(filename, receiver_email):
     message["From"] = sender_email
     message["To"] = receiver_email
     message["Subject"] = subject
-    message["Bcc"] = receiver_email  # Recommended for mass emails
+    #message["Bcc"] = receiver_email  # Recommended for mass emails
     # Add body to email
     message.attach(MIMEText(body, "plain"))
     # Open file=filename in binary mode
