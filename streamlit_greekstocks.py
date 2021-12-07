@@ -300,9 +300,8 @@ for stock in stocks:
     df_cum_ret[stock]=cumulative_returns(stock, df_pct[stock])
 
 st.write('Συσσωρευτικές αποδόσεις των παραπάνω μετοχών για τις Χ τελευταίες ημέρες, όπου Χ η επιλογή στην αριστερή στήλη.')
-m_cum_ret=pd.DataFrame((df_cum_ret.iloc[-1:,:])).max()
-df_cum_ret=100*(df_cum_ret.iloc[-1:,:]-1)
-st.dataframe(100*df_cum_ret.tail(10))
+df_cum_ret=(df_cum_ret.iloc[-1:,:]-1)
+st.dataframe(df_cum_ret.tail(10))
 st.write('Πίνακας των ημερησίων ποσοστιαίων μεταβολών όλων των Μετοχών για τις Χ ημέρες')
 st.dataframe(100*df_pct.tail(10))
 corr_table = df_pct.corr()
