@@ -164,7 +164,7 @@ def send_portfolio_byemail(filename, receiver_email):
     return        
 
 #stock universe 
-stocks=[ 'AEGN.ATH', 'AETF.ATH', 'ALMY.ATH', 'ALPHA.ATH', 'ANDRO.ATH', 'ANEK.ATH', 'ASCO.ATH',
+stocks=['AEGN.ATH', 'AETF.ATH', 'ALMY.ATH', 'ALPHA.ATH', 'ANDRO.ATH', 'ANEK.ATH', 'ASCO.ATH',
      'ASTAK.ATH', 'ATEK.ATH', 'ATRUST.ENAX', 'ATTICA.ATH', 'AVAX.ATH', 'AVE.ATH', 'BELA.ATH', 'BIOKA.ATH',
      'BIOSK.ATH', 'BIOT.ATH', 'BRIQ.ATH', 'BYTE.ATH', 'CENER.ATH',  'CRETA.ATH', 'DAIOS.ATH', 'DOMIK.ATH',
      'DROME.ATH', 'DUR.ATH', 'EEE.ATH', 'EKTER.ATH', 'ELBE.ATH', 'ELBIO.ATH', 'ELHA.ATH', 'ELIN.ATH', 'ELLAKTOR.ATH',
@@ -182,7 +182,7 @@ st.set_page_config(layout="wide")
 st.title('Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ')
 data_load_state = st.text('Loading data...')
 # Load rows of data into the dataframe.
-data = load_data()
+data = load_data(stocks)[1]
 # Notify the reader that the data was successfully loaded.
 data_load_state.text("Done! (using st.cache)")
 st.subheader('ΠΡΟΣΟΧΗ ότι βλέπετε εδώ είναι φτιαγμένο για ενημερωτικούς και εκπαιδευτικούς σκοπούς μόνο και σε καμιά περίπτωση δεν αποτελεί επενδυτική ή άλλου είδους πρόταση.')
