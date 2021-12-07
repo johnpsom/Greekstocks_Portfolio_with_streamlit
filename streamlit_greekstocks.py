@@ -290,8 +290,8 @@ for ticker in stocks:
 
 l_close_min=l_close['len_prices'].min()
 df=close_data
-q=st.sidebar.slider('Υπολογισμός με βάση τις τιμές των τελευταίων Χ ημερών', 60, 300, 90,10)
-df_t=df.tail(q)
+q=st.sidebar.slider('Υπολογισμός με βάση τις τιμές των τελευταίων Χ ημερών', 500, 700, 600,10)
+df_tr=df.tail(q)
 df_pct=df_t.pct_change()
 df_cum_ret=pd.DataFrame()
 for stock in stocks:
@@ -312,26 +312,34 @@ st.write('Πίνακας των τιμών των Συντελεστών Συσ�
 st.dataframe(corr_table)
 #-----Γενικές παράμετροι
 st.sidebar.write('ΠΑΡΑΜΕΤΡΟΙ ΒΕΛΤΙΣΤΟΠΟΙΗΜΕΝΩΝ ΧΑΡΤΟΦΥΛΑΚΙΩΝ')
-port_value=st.sidebar.slider('Αρχική επένδυση στο χαρτοφυλάκιο €', 1000, 10000, 2000,500)
-riskmo = st.sidebar.checkbox('Επιλeγμένο επιλέγει το μοντέλο ρίσκου Ledoit Wolf αλλιώς χρησιμοποιεί τον πίνακα των συνδιακυμάνσεων των Μετοχών.',value=True)
-weightsmo=st.sidebar.checkbox('Επιλεγμένο επιλέγει τον υπολογισμό των βαρών με βάση τον μέγιστο Sharpe Ratio αλλιώς με την ελάχιστη διακύμανση.',value=True)
-allocmo=st.sidebar.checkbox('Επιλεγμένο επιλέγει τον υπολογισμό του μοντέλου του greedy_portfolio αλλιώς επιλέγει το lp_portfolio.',value=True)
-cutoff=st.sidebar.slider('Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.30, 0.10)
-
-
+port_value=st.sidebar.slider('Αρχική επένδυση στο χαρτοφυλάκιο €', 1000, 10000, 5000,500)
+cutoff=st.sidebar.slider('Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.30, 0.10, 0.05)
+momentum_window=st.sidebar.slider('πλήθος τιμών Μετοχής στον υπολογισμό του momentum indicator.',90, 500, 120,30)
+minimum_momentum=st.sidebar.slider('Ελάχιστο τιμή του momentum indicator.',70, 180, 120,10)
+df_m=pd.DataFrame()
+m_s=[]
+sto=[]
+for s in stocks:
+    sto.append(s)
+    m_s.append(momentum_score(df_tr[s].tail(momentum_window)))
+df_m['stock']=st
+df_m['momentum']=m_s
+dev=df_m['momentum'].std()
+# Get the top momentum stocks for the period
+df_m = df_m.sort_values(by='momentum', ascending=False)
+df_m=df_m[(df_m['momentum']>minimum_momentum-0.5*dev)&(df_m['momentum']<minimum_momentum+1.9*dev)].head(portfolio_size)
+# Set the universe to the top momentum stocks for the period
+universe = df_m['stock'].tolist()
+st.write(universe)
+# Create a df with just the stocks from the universe
+df_t = select_columns(df_tr, universe)
 #-----Χαρτοφυλάκιο Νο1 γενικό
 #Calculate portofolio mu and S
 mu =capm_returns(df_t)
-if riskmo:
-    S = CovarianceShrinkage(df_t).ledoit_wolf()
-else:
-    S = risk_models.sample_cov(df_t)
-# Optimise the portfolio 
-ef = EfficientFrontier(mu, S, gamma=1) # Use regularization (gamma=1)
-if weightsmo:
-    weights = ef.max_sharpe()
-else:
-    weights = ef.min_volatility()
+S = CovarianceShrinkage(df_t).ledoit_wolf()
+# Optimise the portfolio for maximal Sharpe ratio
+ef = EfficientFrontier(mu, S) # Use regularization (gamma=1)
+weights=ef.min_volatility()
 cleaned_weights = ef.clean_weights(cutoff=cutoff,rounding=3)
 ef.portfolio_performance()
 
@@ -347,13 +355,9 @@ da =DiscreteAllocation( cleaned_weights,
                         latest_prices,
                         total_portfolio_value=port_value
                         )
-if allocmo:
-    allocation = da.greedy_portfolio()[0]
-    non_trading_cash=da.greedy_portfolio()[1]
-else:
-    allocation = da.lp_portfolio()[0]
-    non_trading_cash=da.lp_portfolio()[1]
-# Put the stocks and the number of shares from the portfolio into a df
+allocation = da.greedy_portfolio()[0]
+non_trading_cash=da.greedy_portfolio()[1]
+
 # Put the stocks and the number of shares from the portfolio into a df
 symbol_list = []
 mom=[]
