@@ -233,9 +233,9 @@ def send_portfolio_byemail(filename, receiver_email):
     email_text = message.as_string()
     
     # Log in to server using secure context and send email
-    
-    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server = smtplib.SMTP('smtp.gmail.com', 587)
     server.ehlo()
+    server.starttls()
     server.login(gmail_user, gmail_password)
     server.sendmail(gmail_user, receiver_email , email_text)
     server.close()
