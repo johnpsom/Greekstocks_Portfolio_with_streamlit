@@ -211,9 +211,8 @@ for ticker in stocks:
 
 l_close_min=l_close['len_prices'].min()
 
-
-st.dataframe(close_data=close_data.iloc[:,1:])
 df=close_data.iloc[:,1:]
+df.tail()
 q=st.sidebar.slider('Υπολογισμός με βάση τις τιμές των τελευταίων Χ ημερών', 60, 300, 90,10)
 df_t=df.tail(q)
 df_pct=df_t.pct_change()
