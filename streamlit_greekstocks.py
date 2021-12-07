@@ -305,7 +305,7 @@ cutoff=st.sidebar.slider('Ελάχιστο Ποσοστό Συμμετοχής �
 
 #-----Χαρτοφυλάκιο Νο1 γενικό
 #Calculate portofolio mu and S
-mu =capm(df_t)
+mu =capm_returns(df_t)
 if riskmo:
     S = CovarianceShrinkage(df_t).ledoit_wolf()
 else:
