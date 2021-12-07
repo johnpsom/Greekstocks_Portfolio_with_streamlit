@@ -371,22 +371,22 @@ l_price=[]
 tot_cash=[]
 for symbol, num_shares in allocation.items():
     symbol_list.append(symbol)
-    mom.append(df_m[df_m['stock']==symbol].values[0])
     w.append(cleaned_weights[symbol])
     num_shares_list.append(num_shares)
     l_price.append(latest_prices[symbol])
     tot_cash.append(num_shares*latest_prices[symbol])
-
+    st.write(symbol)
+    
 df_buy=pd.DataFrame()
 df_buy['stock']=symbol_list
-df_buy['momentum']=mom
+
 df_buy['weights']=w
 df_buy['shares']=num_shares_list
 df_buy['price']=l_price
 df_buy['value']=tot_cash
 df_buy=df_buy.append({'stock':'CASH','momentum':0,'weights': round(1-df_buy['value'].sum()/port_value,2),'shares':1,'price':round(port_value-df_buy['value'].sum(),2),'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
 df_buy=df_buy.set_index('stock')
-df_buy
+st.dataframe(df_buy)
 st.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buy['value'].sum(),100*df_buy['value'].sum()/port_value))
 st.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buy['value'].sum(),100-100*df_buy['value'].sum()/port_value))
 st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
