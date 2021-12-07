@@ -201,13 +201,13 @@ def cumulative_returns(stock,returns):
 def send_portfolio_byemail(filename, receiver_email):
     smtp_server = "smtp.gmail.com"
     port =465 # For starttls
-    sender_email = st.secrets["sender_email"]
-    password = st.secrets["password"]
+    gmail_user = st.secrets["sender_email"]
+    gmail_password = st.secrets["password"]
     subject = "Το Χαρτοφυλάκιό σου"
-    body = "Βρες στο συνημμένο αρχείο το χαρτοφυλάκιο που έχεις φτιάξει."
+    body = "Λαμβάνεις αυτό το μύνημα διότι έφτιαξες ένα χαρτοφυλάκιο και ζήτησες να σου αποσταλεί. Βρες στο συνημμένο αρχείο το χαρτοφυλάκιο που έχεις φτιάξει."
     # Create a multipart message and set headers
     message = MIMEMultipart()
-    message["From"] = sender_email
+    message["From"] = gmail_user
     message["To"] = receiver_email
     message["Subject"] = subject
     #message["Bcc"] = receiver_email  # Recommended for mass emails
@@ -230,16 +230,18 @@ def send_portfolio_byemail(filename, receiver_email):
     
     # Add attachment to message and convert message to string
     message.attach(part)
-    text = message.as_string()
+    email_text = message.as_string()
     
     # Log in to server using secure context and send email
-    context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-        server.login(sender_email, password)
-        server.sendmail(sender_email, receiver_email, text)
-        #after send email delete the csv file
-        if os.path.isfile(filename):
-            os.remove(filename) 
+    try:
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.ehlo()
+        server.login(gmail_user, gmail_password)
+        server.sendmail(gmail_user, receiver_email , email_text)
+        server.close()
+        st.write('Αποστολή email OK!')
+    except:
+        st.write('Οουπς... κάτι δεν πήγε καλά...')
     return        
 
 #stock universe 
