@@ -97,7 +97,7 @@ def load_data(tickers_gr):
         #print(ticker,len(data))
         greekstocks_data[ticker]=data
         close_data=greekstocks_data[ticker]['close']
-    return greekstocks_data,close_data
+    return greekstocks_data
 
 # Momentum score function
 def momentum_score(ts):
@@ -182,7 +182,7 @@ st.set_page_config(layout="wide")
 st.title('Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ')
 data_load_state = st.text('Loading data...')
 # Load rows of data into the dataframe.
-data = load_data(stocks)[1]
+data = load_data(stocks)
 # Notify the reader that the data was successfully loaded.
 data_load_state.text("Done! (using st.cache)")
 st.subheader('ΠΡΟΣΟΧΗ ότι βλέπετε εδώ είναι φτιαγμένο για ενημερωτικούς και εκπαιδευτικούς σκοπούς μόνο και σε καμιά περίπτωση δεν αποτελεί επενδυτική ή άλλου είδους πρόταση.')
@@ -193,8 +193,27 @@ st.write('Στον παρακάτω πίνακα φαίνεται η λίστα 
 st.write('Οι μετοχές που έχουν αρχικά επιλεγεί είναι οι παρακάτω που βλέπουμε στον πίνακα των τιμών κλεισίματος τους. Τα ονόματα τους είναι τα ονόματα των στηλών του πίνακα.')
 st.write('Επιλέξτε από την στήλη αριστερά το μέγεθος, το βάθος χρόνου και το είδος του Χαρτοφυλακίου που θέλετε να ψάξει και να φτιάξει για σας η εφαρμογή.')
 
-st.dataframe(data=data.iloc[:,1:])
-df=data.iloc[:,1:]
+l_close=pd.DataFrame(columns=['stock','date','lastprice','len_prices'])
+close_data=pd.DataFrame()
+i=1
+for ticker in stocks:
+    last_close=data[ticker].iloc[-1]['close']
+    last_date=data[ticker].iloc[-1]['date']
+    len_values=len(data[ticker])
+    l_close=l_close.append({'stock':ticker,'date':last_date,'lastprice':last_close,
+                            'len_prices':len_values},ignore_index=True)
+    df_temp=data[ticker].loc[:,['date','close']].rename(columns={'close':ticker}).set_index('date')
+    if i==1:
+        close_data=df_temp
+        i=i+1
+    else:
+        close_data=close_data.merge(df_temp,how='inner',on='date')
+
+l_close_min=l_close['len_prices'].min()
+
+
+st.dataframe(close_data=close_data.iloc[:,1:])
+df=close_data.iloc[:,1:]
 q=st.sidebar.slider('Υπολογισμός με βάση τις τιμές των τελευταίων Χ ημερών', 60, 300, 90,10)
 df_t=df.tail(q)
 df_pct=df_t.pct_change()
@@ -599,6 +618,4 @@ else:
     st.write(' δηλ. έχουμε μια απόδοση ίση με '+str(100*round(new_port_value/df1['value'].sum()-1,4))+'%')
     st.dataframe(df1)
     file.close()
-        
-      
-  
+    
