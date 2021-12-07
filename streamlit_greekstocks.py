@@ -203,6 +203,8 @@ def send_portfolio_byemail(filename, receiver_email):
     port =465 # For starttls
     gmail_user = st.secrets["sender_email"]
     gmail_password = st.secrets["password"]
+    st.write(gmail_user)
+    st.write(gmail_password)
     subject = "Το Χαρτοφυλάκιό σου"
     body = "Λαμβάνεις αυτό το μύνημα διότι έφτιαξες ένα χαρτοφυλάκιο και ζήτησες να σου αποσταλεί. Βρες στο συνημμένο αρχείο το χαρτοφυλάκιο που έχεις φτιάξει."
     # Create a multipart message and set headers
@@ -210,7 +212,7 @@ def send_portfolio_byemail(filename, receiver_email):
     message["From"] = gmail_user
     message["To"] = receiver_email
     message["Subject"] = subject
-    #message["Bcc"] = receiver_email  # Recommended for mass emails
+    
     # Add body to email
     message.attach(MIMEText(body, "plain"))
     # Open file=filename in binary mode
@@ -233,7 +235,7 @@ def send_portfolio_byemail(filename, receiver_email):
     email_text = message.as_string()
     
     # Log in to server using secure context and send email
-    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server = smtplib.SMTP(smtp_server, port)
     server.ehlo()
     server.starttls()
     server.login(gmail_user, gmail_password)
