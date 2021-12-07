@@ -333,9 +333,10 @@ df_m = df_m.sort_values(by='momentum', ascending=False)
 df_m=df_m[(df_m['momentum']>minimum_momentum-0.5*dev)&(df_m['momentum']<minimum_momentum+1.9*dev)].head(portfolio_size)
 # Set the universe to the top momentum stocks for the period
 universe = df_m['stock'].tolist()
-st.write(universe)
+
 # Create a df with just the stocks from the universe
 df_t = select_columns(df_tr, universe)
+st.write(df_t.tail())
 #-----Χαρτοφυλάκιο Νο1 γενικό
 #Calculate portofolio mu and S
 mu =capm_returns(df_t)
