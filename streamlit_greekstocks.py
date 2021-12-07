@@ -358,7 +358,7 @@ da =DiscreteAllocation( cleaned_weights,
                         )
 allocation = da.greedy_portfolio()[0]
 non_trading_cash=da.greedy_portfolio()[1]
-st.write(allocation)
+
 # Put the stocks and the number of shares from the portfolio into a df
 symbol_list = []
 mom=[]
