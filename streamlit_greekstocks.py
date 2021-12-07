@@ -304,7 +304,7 @@ st.write('Συσσωρευτικές αποδόσεις των παραπάνω 
 m_cum_ret=pd.DataFrame((df_cum_ret.iloc[-1:,:])).max()
 df_cum_ret=100*(df_cum_ret.iloc[-1:,:]-1)
 st.write('Πίνακας των ημερησίων ποσοστιαίων μεταβολών όλων των Μετοχών για τις Χ ημέρες')
-st.dataframe(df_pct.tail(10))
+st.dataframe(100*df_pct.tail(10))
 corr_table = df_pct.corr()
 corr_table['stock1'] = corr_table.index
 corr_table = corr_table.melt(id_vars = 'stock1', var_name = 'stock2').reset_index(drop = True)
