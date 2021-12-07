@@ -316,6 +316,7 @@ port_value=st.sidebar.slider('Αρχική επένδυση στο χαρτοφ�
 cutoff=st.sidebar.slider('Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.30, 0.10, 0.05)
 momentum_window=st.sidebar.slider('πλήθος τιμών Μετοχής στον υπολογισμό του momentum indicator.',90, 500, 120,30)
 minimum_momentum=st.sidebar.slider('Ελάχιστο τιμή του momentum indicator.',70, 180, 120,10)
+portfolio_size=st.sidebar.slider('Μέγιστο Πλήθος Μετοχών.',5, 20, 10, 1)
 df_m=pd.DataFrame()
 m_s=[]
 sto=[]
