@@ -233,15 +233,14 @@ def send_portfolio_byemail(filename, receiver_email):
     email_text = message.as_string()
     
     # Log in to server using secure context and send email
-    try:
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.ehlo()
-        server.login(gmail_user, gmail_password)
-        server.sendmail(gmail_user, receiver_email , email_text)
-        server.close()
-        st.write('Αποστολή email OK!')
-    except:
-        st.write('Οουπς... κάτι δεν πήγε καλά...')
+    
+    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server.ehlo()
+    server.login(gmail_user, gmail_password)
+    server.sendmail(gmail_user, receiver_email , email_text)
+    server.close()
+    st.write('Αποστολή email OK!')
+    
     return        
 
 #stock universe 
