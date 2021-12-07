@@ -107,6 +107,22 @@ def momentum_score(ts):
     annualized_slope = (np.power(np.exp(regress[0]), 252) -1) * 100
     return annualized_slope * (regress[2] ** 2)
 
+def returns_from_prices(prices, log_returns=False):
+    """
+    Calculate the returns given prices.
+    :param prices: adjusted (daily) closing prices of the asset, each row is a
+                   date and each column is a ticker/id.
+    :type prices: pd.DataFrame
+    :param log_returns: whether to compute using log returns
+    :type log_returns: bool, defaults to False
+    :return: (daily) returns
+    :rtype: pd.DataFrame
+    """
+    if log_returns:
+        ret= np.log(1 + prices.pct_change())
+    else:
+        ret= prices.pct_change()
+    return ret
 
 def capm_returns(prices, market_prices=None, returns_data=False, risk_free_rate=0.02, \
                  compounding=True, frequency=252):
