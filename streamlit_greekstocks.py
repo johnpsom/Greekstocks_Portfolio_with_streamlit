@@ -210,9 +210,7 @@ for ticker in stocks:
         close_data=close_data.merge(df_temp,how='inner',on='date')
 
 l_close_min=l_close['len_prices'].min()
-
-df=close_data.iloc[:,1:]
-df.tail()
+df=close_data
 q=st.sidebar.slider('Υπολογισμός με βάση τις τιμές των τελευταίων Χ ημερών', 60, 300, 90,10)
 df_t=df.tail(q)
 df_pct=df_t.pct_change()
@@ -221,9 +219,9 @@ for stock in stocks:
     df_cum_ret[stock]=cumulative_returns(stock, df_pct[stock])
 
 st.write('Συσσωρευτικές αποδόσεις των παραπάνω μετοχών για τις Χ τελευταίες ημέρες, όπου Χ η επιλογή στην αριστερή στήλη.')
-st.dataframe(100*(df_cum_ret.iloc[-1:,:]-1))
+
 m_cum_ret=pd.DataFrame((df_cum_ret.iloc[-1:,:])).max()
-max_ret=round(100*(m_cum_ret.max()-1),0)
+df_cum_ret=100*(df_cum_ret.iloc[-1:,:]-1))
 st.write('Πίνακας των ημερησίων ποσοστιαίων μεταβολών όλων των Μετοχών για τις Χ ημέρες')
 st.dataframe(df_pct)
 corr_table = df_pct.corr()
