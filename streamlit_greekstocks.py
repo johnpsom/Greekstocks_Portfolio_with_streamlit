@@ -292,7 +292,7 @@ l_close_min=l_close['len_prices'].min()
 df=close_data
 q=st.sidebar.slider('Υπολογισμός με βάση τις τιμές των τελευταίων Χ ημερών', 500, 700, 600,10)
 df_tr=df.tail(q)
-df_pct=df_t.pct_change()
+df_pct=df_tr.pct_change()
 df_cum_ret=pd.DataFrame()
 for stock in stocks:
     df_cum_ret[stock]=cumulative_returns(stock, df_pct[stock])
