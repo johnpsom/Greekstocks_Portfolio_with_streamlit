@@ -300,7 +300,7 @@ for stock in stocks:
     df_cum_ret[stock]=cumulative_returns(stock, df_pct[stock])
 
 st.write('Συσσωρευτικές αποδόσεις των παραπάνω μετοχών για τις Χ τελευταίες ημέρες, όπου Χ η επιλογή στην αριστερή στήλη.')
-df_cum_ret=(df_cum_ret.iloc[-1:,:]-1)
+df_cum_ret=100*(df_cum_ret.iloc[-1:,:]-1)
 st.dataframe(df_cum_ret.tail(10))
 st.write('Πίνακας των ημερησίων ποσοστιαίων μεταβολών όλων των Μετοχών για τις Χ ημέρες')
 st.dataframe(100*df_pct.tail(10))
@@ -346,7 +346,7 @@ weights=ef.min_volatility()
 cleaned_weights = ef.clean_weights(cutoff=cutoff,rounding=3)
 ef.portfolio_performance()
 
-st.subheader('Χαρτοφυλάκιο Νο1')
+st.subheader('Βελτιστοποιημένο Χαρτοφυλάκιο')
 st.write('Το προτεινόμενο χαρτοφυλάκιο από τις ιστορικές τιμές των επιλεγμένων μετοχών έχει τα παρακάτω χαρακτηριστικά')
 st.write('Αρχική Αξία Χαρτοφυλακίου : '+str(port_value)+'€')
 st.write('Sharpe Ratio: '+str(round(ef.portfolio_performance()[2],2)))
@@ -387,8 +387,8 @@ st.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}%
 df_buy=df_buy.append({'stock':'CASH','weights': round(1-df_buy['value'].sum()/port_value,2),'shares':1,'price':round(port_value-df_buy['value'].sum(),2),'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
 df_buy=df_buy.set_index('stock')
 st.dataframe(df_buy)
-
-
+st.write('Οι ονομασίες των στηλών είναι:  #stock: το σύμβολο της κάθε μετοχής, _weights: το ποσοστό συμμετοχής της στο χαρτοφυλάκιο,')
+st.write('"shares": το πλήθος των μετοχών και "price": η τιμή αγοράς της κάθε μετοχής,')
 st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
 filenm=st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio1",key=1)
 receiver_email=st.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=2)
