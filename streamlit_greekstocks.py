@@ -221,7 +221,7 @@ for stock in stocks:
 st.write('Συσσωρευτικές αποδόσεις των παραπάνω μετοχών για τις Χ τελευταίες ημέρες, όπου Χ η επιλογή στην αριστερή στήλη.')
 
 m_cum_ret=pd.DataFrame((df_cum_ret.iloc[-1:,:])).max()
-df_cum_ret=100*(df_cum_ret.iloc[-1:,:]-1))
+df_cum_ret=100*(df_cum_ret.iloc[-1:,:]-1)
 st.write('Πίνακας των ημερησίων ποσοστιαίων μεταβολών όλων των Μετοχών για τις Χ ημέρες')
 st.dataframe(df_pct)
 corr_table = df_pct.corr()
