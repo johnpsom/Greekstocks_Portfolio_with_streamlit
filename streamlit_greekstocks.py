@@ -524,22 +524,22 @@ else:
         last_price.append(df.iloc[-1][stock])
         nv=df_old.loc[df_old['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]
         new_values.append(nv)
-        pt=round(100*(df.iloc[-1][stock]/df_old.loc[df1['stock']==stock,'bought price'].values[0]-1),2)
+        pt=round(100*(df.iloc[-1][stock]/df_old.loc[df_old['stock']==stock,'bought price'].values[0]-1),2)
         pct.append(pt)
     last_price.append(0)
     pct.append(0)
     df_old['last price']=last_price
     new_values.append(df_old.iloc[-1]['value'])
-    df1['new value']=new_values
-    df1['pct_change%']=pct
+    df_old['new value']=new_values
+    df_old['pct_change%']=pct
     new_port_value=df_old['new value'].sum()
     for stock in list(df_old.iloc[:-1]['stock']):
-        new_weights.append(df_old.loc[df1['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]/new_port_value)
-    new_weights.append(df1.iloc[-1]['new value']/ new_port_value)
+        new_weights.append(df_old.loc[df_old['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]/new_port_value)
+    new_weights.append(df_old.iloc[-1]['new value']/ new_port_value)
     df1['new weights']=new_weights    
-    st.write('Αρχική αξία του Χαροφυλακίου ήταν :'+str(df_old['value'].sum())+'€')
-    st.write('Τώρα είναι :'+str(round(new_port_value,2))+'€')
-    st.write(' δηλ. έχουμε μια απόδοση ίση με '+str(100*round(new_port_value/df_old['value'].sum()-1,4))+'%')
+    st.write(f'Αρχική αξία του Χαροφυλακίου ήταν :{df_old["value"].sum()} €')
+    st.write(f'Τώρα είναι : {round(new_port_value,2)} €')
+    st.write(f'δηλ. έχουμε μια απόδοση ίση με {100*round(new_port_value/df_old["value"].sum()-1,4)} %')
     st.dataframe(df_old)
     file.close()
     rebalance_portfolio(df_old,df_buy)
