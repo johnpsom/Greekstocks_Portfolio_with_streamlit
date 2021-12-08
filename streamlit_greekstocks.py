@@ -471,14 +471,14 @@ df_buy['value']=tot_cash
 st.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buy['value'].sum(),100*df_buy['value'].sum()/port_value))
 st.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value-df_buy['value'].sum(),100-100*df_buy['value'].sum()/port_value))
 df_buy=df_buy.append({'stock':'CASH','weights': round(1-df_buy['value'].sum()/port_value,2),'shares':1,'price':round(port_value-df_buy['value'].sum(),2),'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
-df_buy=df_buy.set_index('stock')
+#df_buy=df_buy.set_index('stock')
 st.dataframe(df_buy)
 st.write('Στον παραπάνω πίνακα βλέπουμε το σύμβολο της κάθε μετοχής, στην στήλη "weights" το ποσοστό συμμετοχής της στο χαρτοφυλάκιο,')
 st.write('στην στήλη "shares" το πλήθος των μετοχών, στην στήλη "price" την τιμή αγοράς της κάθε μετοχής και')  
 st.write('στην στήλη "value" το συνολικό ποσό χρημάτων που επενδύεται στην κάθε μετοχή')
 st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
 filenm=st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="My Portfolio",key=1)
-#receiver_email=st.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=2)
+
 if st.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1',key=1):
     filename = filenm+'.csv'
     download_button_str = download_button(df_buy, filename, f'Click here to download {filename}', pickle_it=False)
