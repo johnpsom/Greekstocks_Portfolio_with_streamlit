@@ -38,19 +38,19 @@ class FileType(Enum):
     """Used to distinguish between file types"""
     CSV = "csv"
 
-def get_file_type(file: Union[BytesIO, StringIO]) -> FileType:
-    """The file uploader widget does not provide information on the type of file uploaded so we have
-    to guess using rules or ML
+    def get_file_type(file: Union[BytesIO, StringIO]) -> FileType:
+        """The file uploader widget does not provide information on the type of file uploaded so we have
+        to guess using rules or ML
 
-    I've implemented rules for now :-)
+        I've implemented rules for now :-)
 
-    Arguments:
-        file {Union[BytesIO, StringIO]} -- The file uploaded
+        Arguments:
+            file {Union[BytesIO, StringIO]} -- The file uploaded
 
-    Returns:
-        FileType -- A best guess of the file type
-    """
-    return FileType.CSV
+        Returns:
+            FileType -- A best guess of the file type
+        """
+        return FileType.CSV
 
 
 @st.cache(ttl=24*60*60)
