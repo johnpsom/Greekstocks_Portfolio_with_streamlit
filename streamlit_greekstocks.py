@@ -300,20 +300,20 @@ def rebalance_portfolio(df_old,df_new):
         #open new positions that only appear in new portfolio
         if stock in list(set(df_new.stock[:-1])-set(df_old.loc[:,'stock'])):
             if df_new.loc[df_new.stock==stock,'shares'].values[0]>0:
-                st.write(f'Αγόρασε {df_new.loc[df_new.stock==stock,'shares'].values[0]} μετοχές της {stock} για να ανοιχτεί νέα long θέση')
+                st.write(f'Αγόρασε {df_new.loc[df_new.stock==stock,"shares"].values[0]} μετοχές της {stock} για να ανοιχτεί νέα long θέση')
             if df_new.loc[df_new.stock==stock,'shares'].values[0]<0:
-                st.write(f'Πούλησε {df_new.loc[df_new.stock==stock,'shares'].values[0]} μετοχές της {stock} για να ανοιχτεί νέα short θέση')
+                st.write(f'Πούλησε {df_new.loc[df_new.stock==stock,"shares"].values[0]} μετοχές της {stock} για να ανοιχτεί νέα short θέση')
         #modify positions of stocks that appear in new and old portfolio
         if (stock in list(df_old.stock)) and (stock in list(df_new.stock[:-1])):
             #change positions
             if df_new.loc[df_new.stock==stock,'shares'].values[0]>0 and df_old.loc[df_old.stock==stock,'shares'].values[0]>0:
-                new_shares=df_new.loc[df_new.stock==stock,'shares'].values[0]-df_old.loc[df_old.stock==stock,'shares'].values[0]
+                new_shares=df_new.loc[df_new.stock==stock,"shares"].values[0]-df_old.loc[df_old.stock==stock,'shares'].values[0]
                 if new_shares>=0:
                     st.write(f'Αγόρασε ακόμη {round(new_shares,0)} της μετοχής {stock}')
                 if new_shares<0:
                     st.write(f'Πούλησε ακόμη {round(-new_shares,0)} της μετοχής {stock}')
             if df_new.loc[df_new.stock==stock,'shares'].values[0]<0 and df_old.loc[df_old.stock==stock,'shares'].values[0]<0:
-                new_shares=df_new.loc[df_new.stock==stock,'shares'].values[0]-df_old.loc[df_old.stock==stock,'shares'].values[0]
+                new_shares=df_new.loc[df_new.stock==stock,"shares"].values[0]-df_old.loc[df_old.stock==stock,'shares'].values[0]
                 if new_shares>=0:
                     st.write(f'Αγόρασε ακόμη {round(new_shares,0)} της μετοχής {stock}')
                 if new_shares<0:
