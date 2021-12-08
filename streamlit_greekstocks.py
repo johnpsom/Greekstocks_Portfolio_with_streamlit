@@ -536,7 +536,7 @@ else:
     for stock in list(df_old.iloc[:-1]['stock']):
         new_weights.append(df_old.loc[df_old['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]/new_port_value)
     new_weights.append(df_old.iloc[-1]['new value']/ new_port_value)
-    df1['new weights']=new_weights    
+    df_old['new weights']=new_weights    
     st.write(f'Αρχική αξία του Χαροφυλακίου ήταν :{df_old["value"].sum()} €')
     st.write(f'Τώρα είναι : {round(new_port_value,2)} €')
     st.write(f'δηλ. έχουμε μια απόδοση ίση με {100*round(new_port_value/df_old["value"].sum()-1,4)} %')
