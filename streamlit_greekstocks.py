@@ -520,7 +520,7 @@ else:
     new_values=[]
     new_weights=[]
     pct=[]
-    for stock in list(df1.iloc[:-1]['stock']):
+    for stock in list(df_old.iloc[:-1]['stock']):
         last_price.append(df.iloc[-1][stock])
         nv=df_old.loc[df_old['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]
         new_values.append(nv)
