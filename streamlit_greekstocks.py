@@ -323,7 +323,7 @@ st.markdown("""
 
 
 
-st.markdown('''  **Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ** 
+st.markdown(''' #Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ 
 ''')
 data_load_state = st.text('Loading data...')
 # Load rows of data into the dataframe.
