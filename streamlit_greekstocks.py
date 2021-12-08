@@ -477,11 +477,11 @@ st.write('Στον παραπάνω πίνακα βλέπουμε το σύμβ�
 st.write('στην στήλη "shares" το πλήθος των μετοχών, στην στήλη "price" την τιμή αγοράς της κάθε μετοχής και')  
 st.write('στην στήλη "value" το συνολικό ποσό χρημάτων που επενδύεται στην κάθε μετοχή')
 st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
-filenm=st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio1",key=1)
+filenm=st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="My Portfolio",key=1)
 #receiver_email=st.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=2)
 if st.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1',key=1):
     filename = filenm+'.csv'
-    download_button_str = download_button(df, filename, f'Click here to download {filename}', pickle_it=False)
+    download_button_str = download_button(df_buy, filename, f'Click here to download {filename}', pickle_it=False)
     st.markdown(download_button_str, unsafe_allow_html=True)
     
     
