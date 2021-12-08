@@ -297,8 +297,8 @@ stocks=['AEGN.ATH', 'AETF.ATH', 'ALMY.ATH', 'ALPHA.ATH', 'ANDRO.ATH', 'ANEK.ATH'
      'PROF.ATH', 'QUAL.ATH', 'QUEST.ATH', 'REVOIL.ATH', 'SAR.ATH', 'SPACE.ATH', 'SPIR.ATH', 'TATT.ATH',
      'TELL.ATH', 'TENERGY.ATH',  'TPEIR.ATH', 'TRASTOR.ATH', 'VARG.ATH', 'VARNH.ATH', 'VIDAVO.ENAX', 'VIO.ATH',
      'VIS.ATH', 'VOSYS.ATH', 'YALCO.ATH','ADMIE.ATH','PPC.ATH']
-st.set_page_config(title=' Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ ',layout="wide")
-#st.title('Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ')
+st.set_page_config(layout="wide")
+st.title('Βελτιστοποιημένο Χαρτοφυλάκιο Μετοχών του ΧΑ')
 data_load_state = st.text('Loading data...')
 # Load rows of data into the dataframe.
 data = load_data(stocks)
