@@ -501,8 +501,8 @@ if not file:
     show_file.info("")
 else:    
     df1 = pd.read_csv(file)
-    df1=df1.iloc[:,1:]
-    print(df1)
+    #df1=df1.iloc[:,1:]
+    df1
     df1=df1.rename(columns={'price':'bought price'})
     last_price=[]
     new_values=[]
