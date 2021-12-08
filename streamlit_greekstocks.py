@@ -380,9 +380,9 @@ st.dataframe(corr_table)
 st.sidebar.write('ΠΑΡΑΜΕΤΡΟΙ ΧΑΡΤΟΦΥΛΑΚΙΟΥ')
 port_value=st.sidebar.slider('Αρχική επένδυση στο χαρτοφυλάκιο €', 1000, 10000, 5000,100)
 cutoff=st.sidebar.slider('Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.20, 0.10, 0.01)
-momentum_window=st.sidebar.slider('πλήθος τιμών Μετοχής στον υπολογισμό του momentum indicator.',90, 500, 120,10)
-minimum_momentum=st.sidebar.slider('Ελάχιστο τιμή του momentum indicator.',70, 180, 120,10)
-portfolio_size=st.sidebar.slider('Μέγιστο Πλήθος Μετοχών.',5, 20, 10, 1)
+momentum_window=st.sidebar.slider('Πλήθος τιμών Μετοχής για τον υπολογισμό του momentum indicator.',90, 500, 120,10)
+minimum_momentum=st.sidebar.slider('Ελάχιστη τιμή του momentum indicator μιας Μετοχής για να συμπεριληφθεί στο χαρτοφυλάκιο.',70, 180, 120,10)
+portfolio_size=st.sidebar.slider('Μέγιστο Πλήθος Μετοχών που θα περιέχει το Χαρτοφυλάκιο.',5, 25, 10, 1)
 df_m=pd.DataFrame()
 m_s=[]
 sto=[]
