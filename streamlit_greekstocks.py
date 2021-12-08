@@ -15,8 +15,17 @@ from pypfopt.efficient_frontier import EfficientFrontier
 from pypfopt import expected_returns,risk_models #,plotting
 from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
 from pypfopt.risk_models import CovarianceShrinkage
+
 import smtplib, ssl
+
+import io
+import base64
 import os
+import json
+import pickle
+import uuid
+import re
+
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
@@ -236,6 +245,89 @@ def send_portfolio_byemail(filename, receiver_email):
     
     return        
 
+def download_button(object_to_download, download_filename, button_text, pickle_it=False):
+    """
+    Generates a link to download the given object_to_download.
+    Params:
+    ------
+    object_to_download:  The object to be downloaded.
+    download_filename (str): filename and extension of file. e.g. mydata.csv,
+    some_txt_output.txt download_link_text (str): Text to display for download
+    link.
+    button_text (str): Text to display on download button (e.g. 'click here to download file')
+    pickle_it (bool): If True, pickle file.
+    Returns:
+    -------
+    (str): the anchor tag to download object_to_download
+    Examples:
+    --------
+    download_link(your_df, 'YOUR_DF.csv', 'Click to download data!')
+    download_link(your_str, 'YOUR_STRING.txt', 'Click to download text!')
+    """
+    if pickle_it:
+        try:
+            object_to_download = pickle.dumps(object_to_download)
+        except pickle.PicklingError as e:
+            st.write(e)
+            return None
+
+    else:
+        if isinstance(object_to_download, bytes):
+            pass
+
+        elif isinstance(object_to_download, pd.DataFrame):
+            #object_to_download = object_to_download.to_csv(index=False)
+            towrite = io.BytesIO()
+            object_to_download = object_to_download.to_excel(towrite, encoding='utf-8', index=False, header=True)
+            towrite.seek(0)
+
+        # Try JSON encode for everything else
+        else:
+            object_to_download = json.dumps(object_to_download)
+
+    try:
+        # some strings <-> bytes conversions necessary here
+        b64 = base64.b64encode(object_to_download.encode()).decode()
+
+    except AttributeError as e:
+        b64 = base64.b64encode(towrite.read()).decode()
+
+    button_uuid = str(uuid.uuid4()).replace('-', '')
+    button_id = re.sub('\d+', '', button_uuid)
+
+    custom_css = f""" 
+        <style>
+            #{button_id} {{
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background-color: rgb(255, 255, 255);
+                color: rgb(38, 39, 48);
+                padding: .25rem .75rem;
+                position: relative;
+                text-decoration: none;
+                border-radius: 4px;
+                border-width: 1px;
+                border-style: solid;
+                border-color: rgb(230, 234, 241);
+                border-image: initial;
+            }} 
+            #{button_id}:hover {{
+                border-color: rgb(246, 51, 102);
+                color: rgb(246, 51, 102);
+            }}
+            #{button_id}:active {{
+                box-shadow: none;
+                background-color: rgb(246, 51, 102);
+                color: white;
+                }}
+        </style> """
+
+    dl_link = custom_css + f'<a download="{download_filename}" id="{button_id}" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}">{button_text}</a><br></br>'
+
+    return dl_link
+
+
 #stock universe 
 stocks=['AEGN.ATH', 'AETF.ATH', 'ALMY.ATH', 'ALPHA.ATH', 'ANDRO.ATH', 'ANEK.ATH', 'ASCO.ATH',
      'ASTAK.ATH', 'ATEK.ATH', 'ATRUST.ENAX', 'ATTICA.ATH', 'AVAX.ATH', 'AVE.ATH', 'BELA.ATH', 'BIOKA.ATH',
@@ -388,11 +480,12 @@ st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτο
 filenm=st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio1",key=1)
 #receiver_email=st.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=2)
 if st.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1',key=1):
-    filenm=filenm+'.csv'
-    df_buy.to_csv(filenm)
-    url = f'https://github.com/johnpsom/greekstocks_portfolio_with_streamlit/edit/main/{filenm}'
-    r = requests.get(url, allow_redirects=True)
-    open(filenm, 'wb').write(r.content)
+    filename = filenm+'.csv'
+    download_button_str = download_button(df, filename, f'Click here to download {filename}', pickle_it=False)
+    st.markdown(download_button_str, unsafe_allow_html=True)
+    
+    
+    
     
     
     #if '@' in parseaddr(receiver_email)[1]:
