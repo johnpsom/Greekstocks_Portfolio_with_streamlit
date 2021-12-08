@@ -377,7 +377,7 @@ corr_table['abs_value'] = np.abs(corr_table['value'])
 st.write('Πίνακας των τιμών των Συντελεστών Συσχέτισης των Μετοχών')
 st.dataframe(corr_table)
 #-----Γενικές παράμετροι
-st.sidebar.write('ΠΑΡΑΜΕΤΡΟΙ ΒΕΛΤΙΣΤΟΠΟΙΗΜΕΝΩΝ ΧΑΡΤΟΦΥΛΑΚΙΩΝ')
+st.sidebar.write('ΠΑΡΑΜΕΤΡΟΙ ΧΑΡΤΟΦΥΛΑΚΙΟΥ')
 port_value=st.sidebar.slider('Αρχική επένδυση στο χαρτοφυλάκιο €', 1000, 10000, 5000,100)
 cutoff=st.sidebar.slider('Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.20, 0.10, 0.01)
 momentum_window=st.sidebar.slider('πλήθος τιμών Μετοχής στον υπολογισμό του momentum indicator.',90, 500, 120,10)
