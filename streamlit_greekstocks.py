@@ -282,6 +282,50 @@ def download_button(object_to_download, download_filename, button_text, pickle_i
     return dl_link
 
 
+def rebalance_portfolio(df_old,df_new):
+    '''rebalance old with new proposed portfolio'''
+    old_port_value=df_old['value'].sum()
+    new_port_value=old_port_value
+    new_stocks= list(df_old.stock[:-1]) + list(set(df_new.stock[:-1])-set(df_old.stock))
+    for stock in new_stocks:
+        #close old positions that do not appear in new portfolio
+        if (stock in list(df_old.stock)) and (stock not in list(df_new.stock[:-1])) :
+            #close positions
+            if df_old.loc[df_old.stock==stock,'shares'].values[0]>0:
+                st.write(f'κλείσιμο θέσης στην μετοχή {stock})
+                new_port_value=new_port_value+df_old.loc[df_old.stock==stock,'shares'].values[0]
+            if df_old.loc[df_old.stock==stock,'shares'].values[0]<0:
+                st.write(f'κλείσιμο θέσης στην μετοχή {stock})
+                new_port_value=new_port_value+df_old.loc[df_old.stock==stock,'shares'].values[0]
+        #open new positions that only appear in new portfolio
+        if stock in list(set(df_new.stock[:-1])-set(df_old.loc[:,'stock'])):
+            if df_new.loc[df_new.stock==stock,'shares'].values[0]>0:
+                st.write(f'Αγόρασε {df_new.loc[df_new.stock==stock,'shares'].values[0]} μετοχές της {stock} για να ανοιχτεί νέα long θέση')
+            if df_new.loc[df_new.stock==stock,'shares'].values[0]<0:
+                print(f'Πούλησε {df_new.loc[df_new.stock==stock,'shares'].values[0]} μετοχές της {stock} για να ανοιχτεί νέα short θέση')
+        #modify positions of stocks that appear in new and old portfolio
+        if (stock in list(df_old.stock)) and (stock in list(df_new.stock[:-1])):
+            #change positions
+            if df_new.loc[df_new.stock==stock,'shares'].values[0]>0 and df_old.loc[df_old.stock==stock,'shares'].values[0]>0:
+                new_shares=df_new.loc[df_new.stock==stock,'shares'].values[0]-df_old.loc[df_old.stock==stock,'shares'].values[0]
+                if new_shares>=0:
+                    print(f'Αγόρασε ακόμη {round(new_shares,0)} της μετοχής {stock})
+                if new_shares<0:
+                    print(f'Πούλησε ακόμη {round(-new_shares,0)} της μετοχής {stock})
+            if df_new.loc[df_new.stock==stock,'shares'].values[0]<0 and df_old.loc[df_old.stock==stock,'shares'].values[0]<0:
+                new_shares=df_new.loc[df_new.stock==stock,'shares'].values[0]-df_old.loc[df_old.stock==stock,'shares'].values[0]
+                if new_shares>=0:
+                    print(f'Αγόρασε ακόμη {round(new_shares,0)} της μετοχής {stock})
+                if new_shares<0:
+                    print(f'Πούλησε ακόμη {round(-new_shares,0)} της μετοχής {stock})
+            if df_new.loc[df_new.stock==stock,'shares'].values[0]*df_old.loc[df_old.stock==stock,'shares'].values[0] < 0:
+                new_shares=df_new.loc[df_new.stock==stock,'shares'].values[0] - df_old.loc[df_old.stock==stock,'shares'].values[0]
+                if new_shares>=0:
+                    print(f'Αγόρασε ακόμη {round(new_shares,0)} της μετοχής {stock})
+                if new_shares<0:
+                    print(f'Πούλησε ακόμη {round(-new_shares,0)} της μετοχής {stock})
+    return new_port_value 
+
 #stock universe 
 stocks=['AEGN.ATH', 'AETF.ATH', 'ALMY.ATH', 'ALPHA.ATH', 'ANDRO.ATH', 'ANEK.ATH', 'ASCO.ATH',
      'ASTAK.ATH', 'ATEK.ATH', 'ATRUST.ENAX', 'ATTICA.ATH', 'AVAX.ATH', 'AVE.ATH', 'BELA.ATH', 'BIOKA.ATH',
@@ -470,32 +514,33 @@ show_file = st.empty()
 if not file:
     show_file.info("")
 else:    
-    df1 = pd.read_csv(file)
-    df1=df1.rename(columns={'price':'bought price'})
+    df_old = pd.read_csv(file)
+    df_old=df_old.rename(columns={'price':'bought price'})
     last_price=[]
     new_values=[]
     new_weights=[]
     pct=[]
     for stock in list(df1.iloc[:-1]['stock']):
         last_price.append(df.iloc[-1][stock])
-        nv=df1.loc[df1['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]
+        nv=df_old.loc[df_old['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]
         new_values.append(nv)
-        pt=round(100*(df.iloc[-1][stock]/df1.loc[df1['stock']==stock,'bought price'].values[0]-1),2)
+        pt=round(100*(df.iloc[-1][stock]/df_old.loc[df1['stock']==stock,'bought price'].values[0]-1),2)
         pct.append(pt)
     last_price.append(0)
     pct.append(0)
-    df1['last price']=last_price
-    new_values.append(df1.iloc[-1]['value'])
+    df_old['last price']=last_price
+    new_values.append(df_old.iloc[-1]['value'])
     df1['new value']=new_values
     df1['pct_change%']=pct
-    new_port_value=df1['new value'].sum()
-    for stock in list(df1.iloc[:-1]['stock']):
-        new_weights.append(df1.loc[df1['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]/new_port_value)
+    new_port_value=df_old['new value'].sum()
+    for stock in list(df_old.iloc[:-1]['stock']):
+        new_weights.append(df_old.loc[df1['stock']==stock,'shares'].values[0]*df.iloc[-1][stock]/new_port_value)
     new_weights.append(df1.iloc[-1]['new value']/ new_port_value)
     df1['new weights']=new_weights    
-    st.write('Αρχική αξία του Χαροφυλακίου ήταν :'+str(df1['value'].sum())+'€')
+    st.write('Αρχική αξία του Χαροφυλακίου ήταν :'+str(df_old['value'].sum())+'€')
     st.write('Τώρα είναι :'+str(round(new_port_value,2))+'€')
-    st.write(' δηλ. έχουμε μια απόδοση ίση με '+str(100*round(new_port_value/df1['value'].sum()-1,4))+'%')
-    st.dataframe(df1)
+    st.write(' δηλ. έχουμε μια απόδοση ίση με '+str(100*round(new_port_value/df_old['value'].sum()-1,4))+'%')
+    st.dataframe(df_old)
     file.close()
-    
+    rebalance_portfolio(df_old,df_buy)
+                          
