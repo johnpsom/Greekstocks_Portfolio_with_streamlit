@@ -386,12 +386,17 @@ st.write('στην στήλη "shares" το πλήθος των μετοχών, 
 st.write('στην στήλη "value" το συνολικό ποσό χρημάτων που επενδύεται στην κάθε μετοχή')
 st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
 filenm=st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="Portfolio1",key=1)
-receiver_email=st.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=2)
-filenm=filenm+'.csv'
-df_buy.to_csv(filenm)
+#receiver_email=st.text_input('Ποιό είναι το email στο οποίο θα αποσταλεί το χαρτοφυλάκιο?',value='example@example.com',key=2)
 if st.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1',key=1):
-    if '@' in parseaddr(receiver_email)[1]:
-        send_portfolio_byemail(filenm,receiver_email)
+    filenm=filenm+'.csv'
+    df_buy.to_csv(filenm)
+    url = f'https://github.com/johnpsom/greekstocks_portfolio_with_streamlit/edit/main/{filenm}'
+    r = requests.get(url, allow_redirects=True)
+    open(filenm, 'wb').write(r.content)
+    
+    
+    #if '@' in parseaddr(receiver_email)[1]:
+    #    send_portfolio_byemail(filenm,receiver_email)
 
 
 
