@@ -2,3 +2,10 @@ streamlit
 requests
 PyPortfolioOpt
 scikit-learn
+io
+base64
+os
+json
+pickle
+uuid
+re
