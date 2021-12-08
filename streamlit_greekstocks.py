@@ -16,8 +16,6 @@ from pypfopt import expected_returns,risk_models #,plotting
 from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
 from pypfopt.risk_models import CovarianceShrinkage
 
-import smtplib, ssl
-
 import io
 import base64
 import os
@@ -25,15 +23,6 @@ import json
 import pickle
 import uuid
 import re
-
-from email import encoders
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.utils import parseaddr
-from enum import Enum
-from io import BytesIO, StringIO
-from typing import Union
 
 STYLE = """
 <style>
@@ -205,45 +194,6 @@ def cumulative_returns(stock,returns):
     res.columns = [stock]
     return res
 
-#send your portfolio by email
-def send_portfolio_byemail(filename, receiver_email):
-    smtp_server = "smtp.gmail.com"
-    port =465 # For starttls
-    gmail_user = st.secrets["sender_email"]
-    gmail_password = st.secrets["password"]
-    subject = "Το Χαρτοφυλάκιό σου"
-    body = "Λαμβάνεις αυτό το μύνημα διότι έφτιαξες ένα χαρτοφυλάκιο και ζήτησες να σου αποσταλεί. Βρες στο συνημμένο αρχείο το χαρτοφυλάκιο που έχεις φτιάξει."
-    # Create a multipart message and set headers
-    message = MIMEMultipart()
-    message["From"] = gmail_user
-    message["To"] = receiver_email
-    message["Subject"] = subject
-    # Add body to email
-    message.attach(MIMEText(body, "plain"))
-    # Open file=filename in binary mode
-    with open(filename, "rb") as attachment:
-        # Add file as application/octet-stream
-        # Email client can usually download this automatically as attachment
-        part = MIMEBase("application", "octet-stream")
-        part.set_payload(attachment.read())
-    # Encode file in ASCII characters to send by email    
-    encoders.encode_base64(part)
-    # Add header as key/value pair to attachment part
-    part.add_header("Content-Disposition",f"attachment; filename= {filename}")
-    # Add attachment to message and convert message to string
-    message.attach(part)
-    email_text = message.as_string()
-    #Create SMTP session for sending the mail
-    server = smtplib.SMTP('smtp.gmail.com:587')
-    server.ehlo_or_helo_if_needed()
-    server.starttls()
-    server.ehlo_or_helo_if_needed()
-    session.login(gmail_user, gmail_password) #login with mail_id and password
-    server.sendmail(gmail_user, receiver_email , email_text)
-    session.quit()
-    st.write('Αποστολή email OK!')
-    
-    return        
 
 def download_button(object_to_download, download_filename, button_text, pickle_it=False):
     """
@@ -484,15 +434,6 @@ if st.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1',key=
     download_button_str = download_button(df_buy, filename, f'Click here to download {filename}', pickle_it=False)
     st.markdown(download_button_str, unsafe_allow_html=True)
     
-    
-    
-    
-    
-    #if '@' in parseaddr(receiver_email)[1]:
-    #    send_portfolio_byemail(filenm,receiver_email)
-
-
-
 st.subheader('Εαν έχετε προηγουμένως χρησιμοποιήσει την εφαρμογή και έχετε ζητήσει ένα Χαροφυλάκιο ανεβάστε το csv αρχείο στο παρακάτω πεδίο για να δείτε την απόδοσή του σήμερα.')    
 st.markdown(STYLE, unsafe_allow_html=True)
 file = st.file_uploader("Σύρτε και αφήστε εδώ το Χαρτοφυλάκιό σας έφτιαξε η εφαρμογή για σας (*.csv)", type='csv')
@@ -501,8 +442,6 @@ if not file:
     show_file.info("")
 else:    
     df1 = pd.read_csv(file)
-    #df1=df1.iloc[:,1:]
-    df1
     df1=df1.rename(columns={'price':'bought price'})
     last_price=[]
     new_values=[]
