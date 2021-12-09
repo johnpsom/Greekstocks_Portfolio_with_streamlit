@@ -46,7 +46,13 @@ def returns_from_prices(prices, log_returns=False):
         ret= prices.pct_change()
     return ret
 
-  
+def get_latest_prices(prices):
+    '''get latest prices of all stocks'''
+    if not isinstance(prices, pd.DataFrame):
+        raise TypeError("prices not in a dataframe")
+    return prices.ffill().iloc[-1]
+
+
 def capm_returns(prices, market_prices=None, returns_data=False, risk_free_rate=0.02, \
                  compounding=True, frequency=252):
     """
@@ -206,7 +212,7 @@ def backtest_portfolio(df,dataset=1000,l_days=700,momentum_window=120,minimum_mo
     allocation={}
     non_trading_cash=0
     new_port_value=0
-    print(momentum_window,minimum_momentum,portfolio_size,tr_period,cutoff,port_value)
+    #print(momentum_window,minimum_momentum,portfolio_size,tr_period,cutoff,port_value)
     added_value=tr_period*a_v
     no_tr=1 #number of trades performed
     init_portvalue=port_value
