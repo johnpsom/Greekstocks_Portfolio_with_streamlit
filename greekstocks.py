@@ -202,6 +202,90 @@ def download_button(object_to_download, download_filename, button_text, pickle_i
     return dl_link
 
 
+def backtest_portfolio(df,dataset=1000,l_days=700,momentum_window=120,minimum_momentum=70,portfolio_size=5,tr_period=5,cutoff=0.05,port_value=10000,a_v=0):
+    allocation={}
+    non_trading_cash=0
+    new_port_value=0
+    print(momentum_window,minimum_momentum,portfolio_size,tr_period,cutoff,port_value)
+    added_value=tr_period*a_v
+    no_tr=1 #number of trades performed
+    init_portvalue=port_value
+    plotted_portval=[]
+    plotted_ret=[]
+    pval=pd.DataFrame(columns=['Date','portvalue','porteff'])
+    keep_df_buy=True
+    for days in range(dataset,len(df),tr_period):
+        df_tr=df.iloc[days-l_days:days,:]
+        df_date=datetime.strftime(df.iloc[days,:].name,'%d-%m-%Y')
+        if days<=dataset:
+            ini_date=df_date
+        if days>dataset and keep_df_buy is False:
+            latest_prices = get_latest_prices(df_tr)
+            new_port_value=non_trading_cash
+            allocation=df_buy['shares'][:-1].to_dict()
+            #print(allocation)
+            if keep_df_buy is False:
+                #print('Sell date',df_date)
+                for s in allocation:
+                    new_port_value=new_port_value+allocation.get(s)*latest_prices.get(s)
+                    #print('Sell ',s,'stocks: ',allocation.get(s),' bought for ',df_buy['price'][s],' sold for ',latest_prices.get(s)
+                    #       ,' for total:{0:.2f} and a gain of :{1:.2f}'.format(allocation.get(s)*latest_prices.get(s),
+                    #      (latest_prices.get(s)-df_buy['price'][s])*allocation.get(s)))
+                eff=new_port_value/port_value-1
+                #print('Return after trading period {0:.2f}%  for a total Value {1:.2f}'.format(eff*100,new_port_value))
+                port_value=new_port_value
+                plotted_portval.append(round(port_value,2))
+                plotted_ret.append(round(eff*100,2))
+                pval=pval.append({'Date':df_date,'portvalue':round(port_value,2),'porteff':round(eff*100,2)}, ignore_index=True)
+                port_value=port_value+added_value #add 200 after each trading period
+        df_m=pd.DataFrame()
+        m_s=[]
+        st=[]
+        for s in tickers_gr:
+            st.append(s)
+            m_s.append(momentum_score(df_tr[s].tail(momentum_window)))
+        df_m['stock']=st
+        df_m['momentum']=m_s
+        dev=df_m['momentum'].std()
+        # Get the top momentum stocks for the period
+        df_m = df_m.sort_values(by='momentum', ascending=False)
+        df_m=df_m[(df_m['momentum']>minimum_momentum-0.5*dev)&(df_m['momentum']<minimum_momentum+1.9*dev)].head(portfolio_size)
+        # Set the universe to the top momentum stocks for the period
+        universe = df_m['stock'].tolist()
+        #print('universe',universe)
+        # Create a df with just the stocks from the universe
+        if len(universe)>2 and port_value>0 :
+            keep_df_buy=False
+            df_buy= get_portfolio(universe, df_tr, port_value, cutoff, df_m)
+            #print('Buy date',df_date)
+            #print(df_buy)
+            #print('trade no:',no_tr,' non allocated cash:{0:.2f}'.format(non_trading_cash),'total invested:', df_buy['value'].sum())
+            port_value=df_buy['value'].sum()
+            no_tr=no_tr+1
+            #st_day=st_day+tr_period
+        else:
+            #print('Buy date',df_date,'Not enough stocks in universe to create portfolio',port_value)
+            port_value=port_value+added_value
+            keep_df_buy=True
+
+    total_ret=100*(new_port_value/(init_portvalue+no_tr*added_value)-1)
+    dura_tion=(no_tr-1)*tr_period
+    if no_tr>2:
+        #print('Total return: {0:.2f} in {1} days'.format(total_ret,dura_tion))
+        #print('Cumulative portfolio return:',round(list(pval['porteff'].cumsum())[-1],2))
+        #print('total capital:',init_portvalue+no_tr*added_value, new_port_value)
+        tot_contr=init_portvalue+no_tr*added_value
+        s=round(pd.DataFrame(plotted_portval).pct_change().add(1).cumprod()*10,2)
+        rs={'trades':no_tr,'momentum_window':momentum_window,
+                        'minimum_momentum':minimum_momentum,
+                        'portfolio_size':portfolio_size,
+                        'tr_period':tr_period,
+                        'cutoff':cutoff,
+                        'tot_contribution':tot_contr,'final port_value':new_port_value,
+                        'cumprod':s[-1:][0].values[0], 'tot_ret':total_ret,'drawdown':s.diff().min()[0]}
+        
+        return rs
+
 def rebalance_portfolio(df_old,df_new):
     '''rebalance old with new proposed portfolio'''
     old_port_value=df_old['value'].sum()
