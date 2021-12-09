@@ -128,6 +128,54 @@ def cumulative_returns(stock,returns):
     return res
 
 
+def get_portfolio(universe,df_tr,port_value,cutoff,df_m):
+    '''create a portfolio using the stocks from the universe and the closing 
+    prices from df_tr with a given portfolio value and a weight cutoff value
+    using the value of a momemntum indicator to limit the quantity of the stocks'''
+    df_t = select_columns(df_tr, universe)
+    mu = capm_returns(df_t)
+    S = CovarianceShrinkage(df_t).ledoit_wolf()
+    # Optimise the portfolio for maximal Sharpe ratio
+    ef = EfficientFrontier(mu, S) # Use regularization (gamma=1)
+    weights=ef.min_volatility()
+    #weights = ef.max_sharpe()
+    cleaned_weights = ef.clean_weights(cutoff=cutoff)
+    # Allocate
+    latest_prices = get_latest_prices(df_t)
+    da =DiscreteAllocation(cleaned_weights,
+                            latest_prices,
+                            total_portfolio_value=port_value
+                            )
+    allocation = da.greedy_portfolio()[0]
+    non_trading_cash=da.greedy_portfolio()[1]
+    # Put the stocks and the number of shares from the portfolio into a df
+    symbol_list = []
+    mom=[]
+    w=[]
+    num_shares_list = []
+    l_price=[]
+    tot_cash=[]
+    for symbol, num_shares in allocation.items():
+        symbol_list.append(symbol)
+        mom.append(df_m[df_m['stock']==symbol].values[0])
+        w.append(cleaned_weights[symbol])
+        num_shares_list.append(num_shares)
+        l_price.append(latest_prices[symbol])
+        tot_cash.append(num_shares*latest_prices[symbol])
+
+    df_buy=pd.DataFrame()
+    df_buy['stock']=symbol_list
+    df_buy['momentum']=mom
+    df_buy['weights']=w
+    df_buy['shares']=num_shares_list
+    df_buy['price']=l_price
+    df_buy['value']=tot_cash
+    df_buy=df_buy.append({'stock':'CASH','momentum':0,'weights': round(1-df_buy['value'].sum()/port_value,2),'shares':1,'price':round(port_value-df_buy['value'].sum(),2),'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
+    df_buy=df_buy.set_index('stock')
+    return df_buy
+
+
+
 def download_button(object_to_download, download_filename, button_text, pickle_it=False):
     """
     Generates a link to download the given object_to_download.
