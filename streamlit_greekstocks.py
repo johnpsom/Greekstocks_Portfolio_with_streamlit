@@ -27,6 +27,10 @@ from enum import Enum
 from io import BytesIO, StringIO
 from typing import Union
 
+#import variables and functions used
+from stocks import stocks
+from greekstocks import momentum_score,returns_from_prices,capm_returns
+from greekstocks import select_columns, cumulative_returns, download_button, rebalance_portfolio
 
 STYLE = """
 <style>
