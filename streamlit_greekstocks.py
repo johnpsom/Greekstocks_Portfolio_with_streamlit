@@ -184,6 +184,10 @@ corr_table = corr_table[corr_table['stock1'] < corr_table['stock2']].dropna()
 corr_table['abs_value'] = np.abs(corr_table['value'])
 st.write('Πίνακας των τιμών των Συντελεστών Συσχέτισης των Μετοχών')
 st.dataframe(corr_table)
+st.write('Πάτα το διπλανό κουμπί για να τρέξει το backtest με όλους τους συνδυασμούς των παραμέτρων')
+if st.button('BACKTEST',key=2):
+    #run backtest"
+    st.write('runbacktest')
 #-----Γενικές παράμετροι
 st.sidebar.write('ΠΑΡΑΜΕΤΡΟΙ ΧΑΡΤΟΦΥΛΑΚΙΟΥ')
 port_value=st.sidebar.slider('Αρχική επένδυση στο χαρτοφυλάκιο €', 1000, 10000, 5000,100)
