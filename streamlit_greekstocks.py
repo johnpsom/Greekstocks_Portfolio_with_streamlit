@@ -29,8 +29,8 @@ from typing import Union
 
 #import variables and functions used
 from stocks import stocks
-from greekstocks import momentum_score,returns_from_prices,capm_returns
-from greekstocks import select_columns, cumulative_returns, download_button, rebalance_portfolio
+from greekstocks import momentum_score,returns_from_prices,capm_returns,get_latest_prices
+from greekstocks import select_columns, cumulative_returns, download_button, rebalance_portfolio, backtest_portfolio
 
 STYLE = """
 <style>
@@ -187,7 +187,44 @@ st.dataframe(corr_table)
 st.write('Πάτα το διπλανό κουμπί για να τρέξει το backtest με όλους τους συνδυασμούς των παραμέτρων')
 if st.button('BACKTEST',key=2):
     #run backtest"
-    st.write('runbacktest')
+    port_value=10000
+    new_port_value=0
+    df=close_data
+    #momentum_window = v
+    #minimum_momentum = 70
+    #portfolio_size=15
+    #cutoff=0.1
+    #added_value how much cash to add each trading period
+    #tr_period=21 #trading period, 21 is a month,10 in a fortnite, 5 is a week, 1 is everyday
+    #dataset=800 #start for length of days used for the optimising dataset
+    #l_days=600  #how many days to use in optimisations
+    res=pd.DataFrame(columns=['trades', 'momentum_window', 'minimum_momentum', 'portfolio_size',
+                              'tr_period', 'cutoff', 'tot_contribution', 'final port_value',
+                              'cumprod', 'tot_ret', 'drawdown'])
+    #backtest 70%
+    #x=int(len(df))
+    df_b=df #.head(x) #backtest dataframe of first x values from total prices 
+    #df_v=df.tail(len(df)-x) #validate dataframe of the rest prices
+    #run all the combinations for all parameter values
+    for momentum_window in [120,180,240,360]:
+        for minimum_momentum in [70,100,120,150,180]:
+            for portfolio_size in [5,10,15,20]:
+                for tr_period in [5,10,20]:
+                    for cutoff in [0.05,0.1]:
+                        port_value=10000
+                        l_days=momentum_window
+                        dataset=int(0.7*len(df_b))
+                        added_value=0
+                        rs=backtest_portfolio(df_b,dataset,l_days,momentum_window,minimum_momentum,portfolio_size,tr_period,cutoff,port_value,added_value)
+                        res=res.append(rs, ignore_index=True)
+                        #print(rs)
+                        #print(res.sort_values(by=['tot_ret']).tail(2))
+    #print(res.sort_values(by=['tot_ret']).tail(10))
+
+    best_res=res.sort_values(by=['tot_ret']).tail(1).reset_index(drop=True)
+    st.write('Ο καλύτερος συνδυασμός των παραμέτρων με τα μέχρι σήμερα ιστορικά στοιχεία είναι ο παρακάτω')
+    st.write(best_res)
+
 #-----Γενικές παράμετροι
 st.sidebar.write('ΠΑΡΑΜΕΤΡΟΙ ΧΑΡΤΟΦΥΛΑΚΙΟΥ')
 port_value=st.sidebar.slider('Αρχική επένδυση στο χαρτοφυλάκιο €', 1000, 10000, 5000,100)
