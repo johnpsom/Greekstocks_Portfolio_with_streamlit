@@ -10,7 +10,7 @@ from pypfopt.efficient_frontier import EfficientFrontier
 from pypfopt import expected_returns,risk_models #,plotting
 from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
 from pypfopt.risk_models import CovarianceShrinkage
-
+import stocks
 import io
 import base64
 import os
@@ -248,7 +248,7 @@ def backtest_portfolio(df,dataset=1000,l_days=700,momentum_window=120,minimum_mo
         df_m=pd.DataFrame()
         m_s=[]
         st=[]
-        for s in tickers_gr:
+        for s in stocks:
             st.append(s)
             m_s.append(momentum_score(df_tr[s].tail(momentum_window)))
         df_m['stock']=st
