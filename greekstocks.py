@@ -10,7 +10,7 @@ from pypfopt.efficient_frontier import EfficientFrontier
 from pypfopt import expected_returns,risk_models #,plotting
 from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
 from pypfopt.risk_models import CovarianceShrinkage
-import stocks
+from stocks import stocks
 import io
 import base64
 import os
