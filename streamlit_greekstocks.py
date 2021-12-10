@@ -164,7 +164,9 @@ st.write('Υπολογισμός βέλτιστου χαρτοφυλακίου �
 st.write('Στον παρακάτω πίνακα φαίνεται η λίστα των μετοχών με τις ημερήσιες τιμές κλεισίματός τους για τις τελευταίες '+str(l_close_min)+' μέρες')
 st.write('Οι μετοχές που έχουν αρχικά επιλεγεί είναι οι παρακάτω που βλέπουμε στον πίνακα των τιμών κλεισίματος τους. Τα ονόματα τους είναι τα ονόματα των στηλών του πίνακα.')
 st.write('Επιλέξτε από την στήλη αριστερά το μέγεθος, το βάθος χρόνου και το είδος του Χαρτοφυλακίου που θέλετε να ψάξει και να φτιάξει για σας η εφαρμογή.')
-
+best_res=pd.DataFrame(columns=['trades', 'momentum_window', 'minimum_momentum', 'portfolio_size',
+                              'tr_period', 'cutoff', 'tot_contribution', 'final port_value',
+                              'cumprod', 'tot_ret', 'drawdown'])
 df=close_data
 q=st.sidebar.slider('Υπολογισμός με βάση τις τιμές των τελευταίων Χ ημερών',600, 1000, 700,50)
 df_tr=df.tail(q)
@@ -185,7 +187,7 @@ corr_table = corr_table[corr_table['stock1'] < corr_table['stock2']].dropna()
 corr_table['abs_value'] = np.abs(corr_table['value'])
 st.write('Πίνακας των τιμών των Συντελεστών Συσχέτισης των Μετοχών')
 st.dataframe(corr_table)
-st.write('Πάτα το διπλανό κουμπί για να τρέξει το backtest με όλους τους συνδυασμούς των παραμέτρων')
+st.write('Πάτα το παρακάτω κουμπί για να τρέξει το backtest με όλους τους συνδυασμούς των παραμέτρων')
 if st.button('BACKTEST',key=2):
     #run backtest"
     port_value=10000
@@ -204,7 +206,7 @@ if st.button('BACKTEST',key=2):
                               'cumprod', 'tot_ret', 'drawdown'])
     #backtest 70%
     #x=int(len(df))
-    df_b=df #.head(x) #backtest dataframe of first x values from total prices 
+    #df_b=df .head(x) #backtest dataframe of first x values from total prices 
     #df_v=df.tail(len(df)-x) #validate dataframe of the rest prices
     #run all the combinations for all parameter values
     for momentum_window in [120,180,240,360]:
@@ -216,7 +218,7 @@ if st.button('BACKTEST',key=2):
                         l_days=700
                         dataset=800
                         added_value=0
-                        rs=backtest_portfolio(df_b,dataset,l_days,momentum_window,minimum_momentum,portfolio_size,tr_period,cutoff,port_value,added_value)
+                        rs=backtest_portfolio(df,dataset,l_days,momentum_window,minimum_momentum,portfolio_size,tr_period,cutoff,port_value,added_value)
                         res=res.append(rs, ignore_index=True)
                         #print(rs)
                         #print(res.sort_values(by=['tot_ret']).tail(2))
@@ -302,12 +304,12 @@ st.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}%
 df_buy=df_buy.append({'stock':'CASH','weights': round(1-df_buy['value'].sum()/port_value,2),'shares':1,'price':round(port_value-df_buy['value'].sum(),2),'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
 #df_buy=df_buy.set_index('stock')
 st.dataframe(df_buy)
+st.write(best_res)
 st.write('Στον παραπάνω πίνακα βλέπουμε το σύμβολο της κάθε μετοχής, στην στήλη "weights" το ποσοστό συμμετοχής της στο χαρτοφυλάκιο,')
 st.write('στην στήλη "shares" το πλήθος των μετοχών, στην στήλη "price" την τιμή αγοράς της κάθε μετοχής και')  
 st.write('στην στήλη "value" το συνολικό ποσό χρημάτων που επενδύεται στην κάθε μετοχή')
 st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
 filenm=st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="My Portfolio",key=1)
-
 if st.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1',key=1):
     filename = filenm+'.csv'
     download_button_str = download_button(df_buy, filename, f'Click here to download {filename}', pickle_it=False)
