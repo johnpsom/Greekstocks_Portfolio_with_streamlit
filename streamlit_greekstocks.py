@@ -304,8 +304,9 @@ st.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}%
 df_buy=df_buy.append({'stock':'CASH','weights': round(1-df_buy['value'].sum()/port_value,2),'shares':1,'price':round(port_value-df_buy['value'].sum(),2),'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
 #df_buy=df_buy.set_index('stock')
 st.dataframe(df_buy)
-
-rs=backtest_portfolio(df,dataset=800,l_days=700,momentum_window,minimum_momentum,portfolio_size,tr_period=20,cutoff,port_value,added_value)
+ 
+rs=backtest_portfolio(df,dataset=800,l_days=700,momentum_window=momentum_window,minimum_momentum=minimum_momentum,
+                      portfolio_size=portfolio_size,tr_period=20,cutoff=cutoff,port_value=port_value,added_value=0)
 st.dataframe(pd.DataFrame(rs))
 
 st.write('Στον παραπάνω πίνακα βλέπουμε το σύμβολο της κάθε μετοχής, στην στήλη "weights" το ποσοστό συμμετοχής της στο χαρτοφυλάκιο,')
