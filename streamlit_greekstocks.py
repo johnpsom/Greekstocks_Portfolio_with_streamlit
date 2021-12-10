@@ -304,20 +304,19 @@ st.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}%
 df_buy=df_buy.append({'stock':'CASH','weights': round(1-df_buy['value'].sum()/port_value,2),'shares':1,'price':round(port_value-df_buy['value'].sum(),2),'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
 #df_buy=df_buy.set_index('stock')
 st.dataframe(df_buy)
-
-st.write('Παρακάτω βλέπετε το πώς θα είχε αποδώσει ένα χαρτοφυλάκιο με τις παραμέτρους που έχετε επιλέξει αν το κάναμε rebalancing κάθε 5 (εβδομάδα) ,10 (15ήμερο),20 (μήνα) ημέρες')
-rs5 =backtest_portfolio(df,dataset=800,l_days=700,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=5,cutoff=cutoff,port_value=port_value,a_v=0)
-st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs5["trades"]} συναλλαγές ανά  5 ημέρες, θα είχαμε μια απόδοση {round(rs5["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs5["final port_value"],2)}€')
-st.write('   ')
-rs10=backtest_portfolio(df,dataset=800,l_days=700,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=10,cutoff=cutoff,port_value=port_value,a_v=0)
-st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs10["trades"]} συναλλαγές ανά 10 ημέρες, θα είχαμε μια απόδοση {round(rs10["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs10["final port_value"],2)}€')
-st.write('   ')
-rs20=backtest_portfolio(df,dataset=800,l_days=700,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=20,cutoff=cutoff,port_value=port_value,a_v=0)
-st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs20["trades"]} συναλλαγές ανά 20 ημέρες, θα είχαμε μια απόδοση {round(rs20["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs20["final port_value"],2)}€')
-st.write('   ')
 st.write('Στον παραπάνω πίνακα βλέπουμε το σύμβολο της κάθε μετοχής, στην στήλη "weights" το ποσοστό συμμετοχής της στο χαρτοφυλάκιο,')
 st.write('στην στήλη "shares" το πλήθος των μετοχών, στην στήλη "price" την τιμή αγοράς της κάθε μετοχής και')  
 st.write('στην στήλη "value" το συνολικό ποσό χρημάτων που επενδύεται στην κάθε μετοχή')
+st.markdown('''**Παρακάτω βλέπετε το πώς θα είχε αποδώσει ένα χαρτοφυλάκιο με τις παραμέτρους που έχετε επιλέξει αν το κάναμε rebalancing κάθε 5 (εβδομάδα) ,10 (15ήμερο),20 (μήνα) ημέρες**''')
+rs5 =backtest_portfolio(df,dataset=800,l_days=700,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=5,cutoff=cutoff,port_value=port_value,a_v=0)
+st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs5["trades"]} συναλλαγές ανά  5 ημέρες, θα είχαμε μια απόδοση {round(rs5["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs5["final port_value"],2)}€')
+
+rs10=backtest_portfolio(df,dataset=800,l_days=700,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=10,cutoff=cutoff,port_value=port_value,a_v=0)
+st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs10["trades"]} συναλλαγές ανά 10 ημέρες, θα είχαμε μια απόδοση {round(rs10["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs10["final port_value"],2)}€')
+
+rs20=backtest_portfolio(df,dataset=800,l_days=700,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=20,cutoff=cutoff,port_value=port_value,a_v=0)
+st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs20["trades"]} συναλλαγές ανά 20 ημέρες, θα είχαμε μια απόδοση {round(rs20["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs20["final port_value"],2)}€')
+
 st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
 filenm=st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="My Portfolio",key=1)
 if st.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1',key=1):
