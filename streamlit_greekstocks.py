@@ -213,8 +213,8 @@ if st.button('BACKTEST',key=2):
                 for tr_period in [5,10,20]:
                     for cutoff in [0.05,0.1]:
                         port_value=10000
-                        l_days=momentum_window
-                        dataset=int(0.7*len(df_b))
+                        l_days=700
+                        dataset=800
                         added_value=0
                         rs=backtest_portfolio(df_b,dataset,l_days,momentum_window,minimum_momentum,portfolio_size,tr_period,cutoff,port_value,added_value)
                         res=res.append(rs, ignore_index=True)
