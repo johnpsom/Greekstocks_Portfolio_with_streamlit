@@ -168,8 +168,7 @@ best_res=pd.DataFrame(columns=['trades', 'momentum_window', 'minimum_momentum', 
                               'tr_period', 'cutoff', 'tot_contribution', 'final port_value',
                               'cumprod', 'tot_ret', 'drawdown'])
 df=close_data
-q=st.sidebar.slider('Υπολογισμός με βάση τις τιμές των τελευταίων Χ ημερών',600, 1000, 700,50)
-df_tr=df.tail(q)
+df_tr=df
 df_pct=df_tr.pct_change()
 df_cum_ret=pd.DataFrame()
 for stock in stocks:
