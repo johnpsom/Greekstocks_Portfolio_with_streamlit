@@ -1,35 +1,29 @@
 import streamlit as st
-import csv
-import requests as req
-from contextlib import closing
 from datetime import datetime
 import pandas as pd
 import numpy as np
 from scipy import stats
-import pypfopt
 from pypfopt.efficient_frontier import EfficientFrontier
-from pypfopt import expected_returns,risk_models #,plotting
-from pypfopt.discrete_allocation import DiscreteAllocation, get_latest_prices
+from pypfopt.discrete_allocation import DiscreteAllocation
 from pypfopt.risk_models import CovarianceShrinkage
 from stocks import stocks
 import io
 import base64
-import os
 import json
 import pickle
 import uuid
 import re
-from enum import Enum
-from io import BytesIO, StringIO
-from typing import Union
+import warnings
+
 
 # Momentum score function
 def momentum_score(ts):
     x = np.arange(len(ts))
     log_ts = np.log(ts)
     regress = stats.linregress(x, log_ts)
-    annualized_slope = (np.power(np.exp(regress[0]), 252) -1) * 100
+    annualized_slope = (np.power(np.exp(regress[0]), 252) - 1) * 100
     return annualized_slope * (regress[2] ** 2)
+
 
 def returns_from_prices(prices, log_returns=False):
     """
@@ -43,20 +37,20 @@ def returns_from_prices(prices, log_returns=False):
     :rtype: pd.DataFrame
     """
     if log_returns:
-        ret= np.log(1 + prices.pct_change())
+        ret = np.log(1 + prices.pct_change())
     else:
-        ret= prices.pct_change()
+        ret = prices.pct_change()
     return ret
 
+
 def get_latest_prices(prices):
-    '''get latest prices of all stocks'''
+    """get the latest prices of all stocks"""
     if not isinstance(prices, pd.DataFrame):
         raise TypeError("prices not in a dataframe")
     return prices.ffill().iloc[-1]
 
 
-def capm_returns(prices, market_prices=None, returns_data=False, risk_free_rate=0.02, \
-                 compounding=True, frequency=252):
+def capm_returns(prices, market_prices=None, returns_data=False, risk_free_rate=0.02, compounding=True, frequency=252):
     """
     Compute a return estimate using the Capital Asset Pricing Model. Under the CAPM,
     asset returns are equal to market returns plus a :math:`\beta` term encoding
@@ -110,71 +104,75 @@ def capm_returns(prices, market_prices=None, returns_data=False, risk_free_rate=
     # Find mean market return on a given time period
     if compounding:
         mkt_mean_ret = (1 + returns["mkt"]).prod() ** (
-            frequency / returns["mkt"].count()
+                frequency / returns["mkt"].count()
         ) - 1
     else:
         mkt_mean_ret = returns["mkt"].mean() * frequency
     # CAPM formula
     return risk_free_rate + betas * (mkt_mean_ret - risk_free_rate)
 
-#select stocks columns
+
+# select stocks columns
 def select_columns(data_frame, column_names):
     new_frame = data_frame.loc[:, column_names]
     return new_frame
 
-#cumulative returns calculation
-def cumulative_returns(stock,returns):
+
+# cumulative returns calculation
+def cumulative_returns(stock, returns):
     res = (returns + 1.0).cumprod()
     res.columns = [stock]
     return res
 
 
-def get_portfolio(universe,df_tr,port_value,cutoff,df_m):
-    '''create a portfolio using the stocks from the universe and the closing 
+def get_portfolio(universe, df_tr, port_value, cutoff, df_m):
+    """create a portfolio using the stocks from the universe and the closing
     prices from df_tr with a given portfolio value and a weight cutoff value
-    using the value of a momemntum indicator to limit the quantity of the stocks'''
+    using the value of a momentum indicator to limit the quantity of the stocks"""
     df_t = select_columns(df_tr, universe)
     mu = capm_returns(df_t)
     S = CovarianceShrinkage(df_t).ledoit_wolf()
-    # Optimise the portfolio for maximal Sharpe ratio
-    ef = EfficientFrontier(mu, S) # Use regularization (gamma=1)
-    weights=ef.min_volatility()
-    #weights = ef.max_sharpe()
+    # Optimize the portfolio for minimum volatility or maximum Sharpe ratio
+    ef = EfficientFrontier(mu, S)  # Use regularization (gamma=1)
+    weights = ef.min_volatility()
+    # weights = ef.max_sharpe()
     cleaned_weights = ef.clean_weights(cutoff=cutoff)
     # Allocate
     latest_prices = get_latest_prices(df_t)
-    da =DiscreteAllocation(cleaned_weights,
+    da = DiscreteAllocation(cleaned_weights,
                             latest_prices,
                             total_portfolio_value=port_value
                             )
     allocation = da.greedy_portfolio()[0]
-    non_trading_cash=da.greedy_portfolio()[1]
+    non_trading_cash = da.greedy_portfolio()[1]
     # Put the stocks and the number of shares from the portfolio into a df
     symbol_list = []
-    mom=[]
-    w=[]
+    mom = []
+    w = []
     num_shares_list = []
-    l_price=[]
-    tot_cash=[]
+    l_price = []
+    tot_cash = []
     for symbol, num_shares in allocation.items():
         symbol_list.append(symbol)
-        mom.append(df_m[df_m['stock']==symbol].values[0])
+        mom.append(df_m[df_m['stock'] == symbol].values[0])
         w.append(cleaned_weights[symbol])
         num_shares_list.append(num_shares)
         l_price.append(latest_prices[symbol])
-        tot_cash.append(num_shares*latest_prices[symbol])
+        tot_cash.append(num_shares * latest_prices[symbol])
 
-    df_buy=pd.DataFrame()
-    df_buy['stock']=symbol_list
-    df_buy['momentum']=mom
-    df_buy['weights']=w
-    df_buy['shares']=num_shares_list
-    df_buy['price']=l_price
-    df_buy['value']=tot_cash
-    df_buy=df_buy.append({'stock':'CASH','momentum':0,'weights': round(1-df_buy['value'].sum()/port_value,2),'shares':1,'price':round(port_value-df_buy['value'].sum(),2),'value':round(port_value-df_buy['value'].sum(),2)}, ignore_index=True)
-    df_buy=df_buy.set_index('stock')
+    df_buy = pd.DataFrame()
+    df_buy['stock'] = symbol_list
+    df_buy['momentum'] = mom
+    df_buy['weights'] = w
+    df_buy['shares'] = num_shares_list
+    df_buy['price'] = l_price
+    df_buy['value'] = tot_cash
+    df_buy = df_buy.append(
+        {'stock': 'CASH', 'momentum': 0, 'weights': round(1 - df_buy['value'].sum() / port_value, 2), 'shares': 1,
+         'price': round(port_value - df_buy['value'].sum(), 2), 'value': round(port_value - df_buy['value'].sum(), 2)},
+        ignore_index=True)
+    df_buy = df_buy.set_index('stock')
     return df_buy
-
 
 
 def download_button(object_to_download, download_filename, button_text, pickle_it=False):
@@ -210,7 +208,7 @@ def download_button(object_to_download, download_filename, button_text, pickle_i
         elif isinstance(object_to_download, pd.DataFrame):
             object_to_download = object_to_download.to_csv(index=False)
             towrite = io.BytesIO()
-            #object_to_download = object_to_download.to_excel(towrite, encoding='utf-8', index=False, header=True)
+            # object_to_download = object_to_download.to_excel(towrite, encoding='utf-8', index=False, header=True)
             towrite.seek(0)
 
         # Try JSON encode for everything else
@@ -258,130 +256,143 @@ def download_button(object_to_download, download_filename, button_text, pickle_i
     return dl_link
 
 
-def backtest_portfolio(df,dataset=1000,l_days=700,momentum_window=120,minimum_momentum=70,portfolio_size=5,tr_period=5,cutoff=0.05,port_value=10000,a_v=0):
-    allocation={}
-    non_trading_cash=0
-    new_port_value=0
-    #print(momentum_window,minimum_momentum,portfolio_size,tr_period,cutoff,port_value)
-    added_value=tr_period*a_v
-    no_tr=1 #number of trades performed
-    init_portvalue=port_value
-    plotted_portval=[]
-    plotted_ret=[]
-    pval=pd.DataFrame(columns=['Date','portvalue','porteff'])
-    keep_df_buy=True
-    for days in range(dataset,len(df),tr_period):
-        df_tr=df.iloc[days-l_days:days,:]
-        df_date=datetime.strftime(df.iloc[days,:].name,'%d-%m-%Y')
-        if days<=dataset:
-            ini_date=df_date
-        if days>dataset and keep_df_buy is False:
+def backtest_portfolio(df, dataset=1000, l_days=700, momentum_window=120, minimum_momentum=70, portfolio_size=5,
+                       tr_period=5, cutoff=0.05, port_value=10000, a_v=0):
+    allocation = {}
+    non_trading_cash = 0
+    new_port_value = 0
+    # print(momentum_window,minimum_momentum,portfolio_size,tr_period,cutoff,port_value)
+    added_value = tr_period * a_v
+    no_tr = 1  # number of trades performed
+    init_portvalue = port_value
+    plotted_portval = []
+    plotted_ret = []
+    pval = pd.DataFrame(columns=['Date', 'portvalue', 'porteff'])
+    keep_df_buy = True
+    for days in range(dataset, len(df), tr_period):
+        df_tr = df.iloc[days - l_days:days, :]
+        df_date = datetime.strftime(df.iloc[days, :].name, '%d-%m-%Y')
+        if days <= dataset:
+            ini_date = df_date
+        if days > dataset and keep_df_buy is False:
             latest_prices = get_latest_prices(df_tr)
-            new_port_value=non_trading_cash
-            allocation=df_buy['shares'][:-1].to_dict()
-            #print(allocation)
+            new_port_value = non_trading_cash
+            allocation = df_buy['shares'][:-1].to_dict()
+            # print(allocation)
             if keep_df_buy is False:
-                #print('Sell date',df_date)
+                # print('Sell date',df_date)
                 for s in allocation:
-                    new_port_value=new_port_value+allocation.get(s)*latest_prices.get(s)
-                    #print('Sell ',s,'stocks: ',allocation.get(s),' bought for ',df_buy['price'][s],' sold for ',latest_prices.get(s)
+                    new_port_value = new_port_value + allocation.get(s) * latest_prices.get(s)
+                    # print('Sell ',s,'stocks: ',allocation.get(s),' bought for ',df_buy['price'][s],' sold for ',latest_prices.get(s)
                     #       ,' for total:{0:.2f} and a gain of :{1:.2f}'.format(allocation.get(s)*latest_prices.get(s),
                     #      (latest_prices.get(s)-df_buy['price'][s])*allocation.get(s)))
-                eff=new_port_value/port_value-1
-                #print('Return after trading period {0:.2f}%  for a total Value {1:.2f}'.format(eff*100,new_port_value))
-                port_value=new_port_value
-                plotted_portval.append(round(port_value,2))
-                plotted_ret.append(round(eff*100,2))
-                pval=pval.append({'Date':df_date,'portvalue':round(port_value,2),'porteff':round(eff*100,2)}, ignore_index=True)
-                port_value=port_value+added_value #add 200 after each trading period
-        df_m=pd.DataFrame()
-        m_s=[]
-        st=[]
+                eff = new_port_value / port_value - 1
+                # print('Return after trading period {0:.2f}%  for a total Value {1:.2f}'.format(eff*100,new_port_value))
+                port_value = new_port_value
+                plotted_portval.append(round(port_value, 2))
+                plotted_ret.append(round(eff * 100, 2))
+                pval = pval.append({'Date': df_date, 'portvalue': round(port_value, 2), 'porteff': round(eff * 100, 2)},
+                                   ignore_index=True)
+                port_value = port_value + added_value  # add 200 after each trading period
+        df_m = pd.DataFrame()
+        m_s = []
+        st = []
         for s in stocks:
             st.append(s)
             m_s.append(momentum_score(df_tr[s].tail(momentum_window)))
-        df_m['stock']=st
-        df_m['momentum']=m_s
-        dev=df_m['momentum'].std()
+        df_m['stock'] = st
+        df_m['momentum'] = m_s
+        dev = df_m['momentum'].std()
         # Get the top momentum stocks for the period
         df_m = df_m.sort_values(by='momentum', ascending=False)
-        df_m=df_m[(df_m['momentum']>minimum_momentum-0.5*dev)&(df_m['momentum']<minimum_momentum+1.9*dev)].head(portfolio_size)
+        df_m = df_m[
+            (df_m['momentum'] > minimum_momentum - 0.5 * dev) & (df_m['momentum'] < minimum_momentum + 1.9 * dev)].head(
+            portfolio_size)
         # Set the universe to the top momentum stocks for the period
         universe = df_m['stock'].tolist()
-        #print('universe',universe)
+        # print('universe',universe)
         # Create a df with just the stocks from the universe
-        if len(universe)>2 and port_value>0 :
-            keep_df_buy=False
-            df_buy= get_portfolio(universe, df_tr, port_value, cutoff, df_m)
-            #print('Buy date',df_date)
-            #print(df_buy)
-            #print('trade no:',no_tr,' non allocated cash:{0:.2f}'.format(non_trading_cash),'total invested:', df_buy['value'].sum())
-            port_value=df_buy['value'].sum()
-            no_tr=no_tr+1
-            #st_day=st_day+tr_period
+        if len(universe) > 2 and port_value > 0:
+            keep_df_buy = False
+            df_buy = get_portfolio(universe, df_tr, port_value, cutoff, df_m)
+            # print('Buy date',df_date)
+            # print(df_buy)
+            # print('trade no:',no_tr,' non allocated cash:{0:.2f}'.format(non_trading_cash),'total invested:', df_buy['value'].sum())
+            port_value = df_buy['value'].sum()
+            no_tr = no_tr + 1
+            # st_day=st_day+tr_period
         else:
-            #print('Buy date',df_date,'Not enough stocks in universe to create portfolio',port_value)
-            port_value=port_value+added_value
-            keep_df_buy=True
+            # print('Buy date',df_date,'Not enough stocks in universe to create portfolio',port_value)
+            port_value = port_value + added_value
+            keep_df_buy = True
 
-    total_ret=100*(new_port_value/(init_portvalue+no_tr*added_value)-1)
-    dura_tion=(no_tr-1)*tr_period
-    if no_tr>2:
-        #print('Total return: {0:.2f} in {1} days'.format(total_ret,dura_tion))
-        #print('Cumulative portfolio return:',round(list(pval['porteff'].cumsum())[-1],2))
-        #print('total capital:',init_portvalue+no_tr*added_value, new_port_value)
-        tot_contr=init_portvalue+no_tr*added_value
-        s=round(pd.DataFrame(plotted_portval).pct_change().add(1).cumprod()*10,2)
-        rs={'trades':no_tr,'momentum_window':momentum_window,
-                        'minimum_momentum':minimum_momentum,
-                        'portfolio_size':portfolio_size,
-                        'tr_period':tr_period,
-                        'cutoff':cutoff,
-                        'tot_contribution':tot_contr,'final port_value':new_port_value,
-                        'cumprod':s[-1:][0].values[0], 'tot_ret':total_ret,'drawdown':s.diff().min()[0]}
-        
+    total_ret = 100 * (new_port_value / (init_portvalue + no_tr * added_value) - 1)
+    dura_tion = (no_tr - 1) * tr_period
+    if no_tr > 2:
+        # print('Total return: {0:.2f} in {1} days'.format(total_ret,dura_tion))
+        # print('Cumulative portfolio return:',round(list(pval['porteff'].cumsum())[-1],2))
+        # print('total capital:',init_portvalue+no_tr*added_value, new_port_value)
+        tot_contr = init_portvalue + no_tr * added_value
+        s = round(pd.DataFrame(plotted_portval).pct_change().add(1).cumprod() * 10, 2)
+        rs = {'trades': no_tr, 'momentum_window': momentum_window,
+              'minimum_momentum': minimum_momentum,
+              'portfolio_size': portfolio_size,
+              'tr_period': tr_period,
+              'cutoff': cutoff,
+              'tot_contribution': tot_contr, 'final port_value': new_port_value,
+              'cumprod': s[-1:][0].values[0], 'tot_ret': total_ret, 'drawdown': s.diff().min()[0]}
+
         return rs
 
-def rebalance_portfolio(df_old,df_new):
+
+def rebalance_portfolio(df_old, df_new):
     '''rebalance old with new proposed portfolio'''
-    old_port_value=df_old['value'].sum()
-    new_port_value=old_port_value
-    new_stocks= list(df_old.stock[:-1]) + list(set(df_new.stock[:-1])-set(df_old.stock))
+    old_port_value = df_old['value'].sum()
+    new_port_value = old_port_value
+    new_stocks = list(df_old.stock[:-1]) + list(set(df_new.stock[:-1]) - set(df_old.stock))
     for stock in new_stocks:
-        #close old positions that do not appear in new portfolio
-        if (stock in list(df_old.stock)) and (stock not in list(df_new.stock[:-1])) :
-            #close positions
-            if df_old.loc[df_old.stock==stock,'shares'].values[0]>0:
+        # close old positions that do not appear in new portfolio
+        if (stock in list(df_old.stock)) and (stock not in list(df_new.stock[:-1])):
+            # close positions
+            if df_old.loc[df_old.stock == stock, 'shares'].values[0] > 0:
                 st.write(f'κλείσιμο θέσης στην μετοχή {stock}')
-                new_port_value=new_port_value+df_old.loc[df_old.stock==stock,'shares'].values[0]
-            if df_old.loc[df_old.stock==stock,'shares'].values[0]<0:
+                new_port_value = new_port_value + df_old.loc[df_old.stock == stock, 'shares'].values[0]
+            if df_old.loc[df_old.stock == stock, 'shares'].values[0] < 0:
                 st.write(f'κλείσιμο θέσης στην μετοχή {stock}')
-                new_port_value=new_port_value+df_old.loc[df_old.stock==stock,'shares'].values[0]
-        #open new positions that only appear in new portfolio
-        if stock in list(set(df_new.stock[:-1])-set(df_old.loc[:,'stock'])):
-            if df_new.loc[df_new.stock==stock,'shares'].values[0]>0:
-                st.write(f'Αγόρασε {df_new.loc[df_new.stock==stock,"shares"].values[0]} μετοχές της {stock} για να ανοιχτεί νέα long θέση')
-            if df_new.loc[df_new.stock==stock,'shares'].values[0]<0:
-                st.write(f'Πούλησε {df_new.loc[df_new.stock==stock,"shares"].values[0]} μετοχές της {stock} για να ανοιχτεί νέα short θέση')
-        #modify positions of stocks that appear in new and old portfolio
+                new_port_value = new_port_value + df_old.loc[df_old.stock == stock, 'shares'].values[0]
+        # open new positions that only appear in new portfolio
+        if stock in list(set(df_new.stock[:-1]) - set(df_old.loc[:, 'stock'])):
+            if df_new.loc[df_new.stock == stock, 'shares'].values[0] > 0:
+                st.write(
+                    f'Αγόρασε {df_new.loc[df_new.stock == stock, "shares"].values[0]} μετοχές της {stock} για να ανοιχτεί νέα long θέση')
+            if df_new.loc[df_new.stock == stock, 'shares'].values[0] < 0:
+                st.write(
+                    f'Πούλησε {df_new.loc[df_new.stock == stock, "shares"].values[0]} μετοχές της {stock} για να ανοιχτεί νέα short θέση')
+        # modify positions of stocks that appear in new and old portfolio
         if (stock in list(df_old.stock)) and (stock in list(df_new.stock[:-1])):
-            #change positions
-            if df_new.loc[df_new.stock==stock,'shares'].values[0]>0 and df_old.loc[df_old.stock==stock,'shares'].values[0]>0:
-                new_shares=df_new.loc[df_new.stock==stock,"shares"].values[0]-df_old.loc[df_old.stock==stock,'shares'].values[0]
-                if new_shares>=0:
-                    st.write(f'Αγόρασε ακόμη {round(new_shares,0)} της μετοχής {stock}')
-                if new_shares<0:
-                    st.write(f'Πούλησε ακόμη {round(-new_shares,0)} της μετοχής {stock}')
-            if df_new.loc[df_new.stock==stock,'shares'].values[0]<0 and df_old.loc[df_old.stock==stock,'shares'].values[0]<0:
-                new_shares=df_new.loc[df_new.stock==stock,"shares"].values[0]-df_old.loc[df_old.stock==stock,'shares'].values[0]
-                if new_shares>=0:
-                    st.write(f'Αγόρασε ακόμη {round(new_shares,0)} της μετοχής {stock}')
-                if new_shares<0:
-                    st.write(f'Πούλησε ακόμη {round(-new_shares,0)} της μετοχής {stock}')
-            if df_new.loc[df_new.stock==stock,'shares'].values[0]*df_old.loc[df_old.stock==stock,'shares'].values[0] < 0:
-                new_shares=df_new.loc[df_new.stock==stock,'shares'].values[0] - df_old.loc[df_old.stock==stock,'shares'].values[0]
-                if new_shares>=0:
-                    st.write(f'Αγόρασε ακόμη {round(new_shares,0)} της μετοχής {stock}')
-                if new_shares<0:
-                    st.write(f'Πούλησε ακόμη {round(-new_shares,0)} της μετοχής {stock}')
-    return new_port_value 
+            # change positions
+            if df_new.loc[df_new.stock == stock, 'shares'].values[0] > 0 and \
+                    df_old.loc[df_old.stock == stock, 'shares'].values[0] > 0:
+                new_shares = df_new.loc[df_new.stock == stock, "shares"].values[0] - \
+                             df_old.loc[df_old.stock == stock, 'shares'].values[0]
+                if new_shares >= 0:
+                    st.write(f'Αγόρασε ακόμη {round(new_shares, 0)} της μετοχής {stock}')
+                if new_shares < 0:
+                    st.write(f'Πούλησε ακόμη {round(-new_shares, 0)} της μετοχής {stock}')
+            if df_new.loc[df_new.stock == stock, 'shares'].values[0] < 0 and \
+                    df_old.loc[df_old.stock == stock, 'shares'].values[0] < 0:
+                new_shares = df_new.loc[df_new.stock == stock, "shares"].values[0] - \
+                             df_old.loc[df_old.stock == stock, 'shares'].values[0]
+                if new_shares >= 0:
+                    st.write(f'Αγόρασε ακόμη {round(new_shares, 0)} της μετοχής {stock}')
+                if new_shares < 0:
+                    st.write(f'Πούλησε ακόμη {round(-new_shares, 0)} της μετοχής {stock}')
+            if df_new.loc[df_new.stock == stock, 'shares'].values[0] * \
+                    df_old.loc[df_old.stock == stock, 'shares'].values[0] < 0:
+                new_shares = df_new.loc[df_new.stock == stock, 'shares'].values[0] - \
+                             df_old.loc[df_old.stock == stock, 'shares'].values[0]
+                if new_shares >= 0:
+                    st.write(f'Αγόρασε ακόμη {round(new_shares, 0)} της μετοχής {stock}')
+                if new_shares < 0:
+                    st.write(f'Πούλησε ακόμη {round(-new_shares, 0)} της μετοχής {stock}')
+    return new_port_value
