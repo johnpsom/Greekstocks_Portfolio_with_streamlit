@@ -194,7 +194,7 @@ minimum_momentum = st.sidebar.slider(
     'Ελάχιστη τιμή του momentum indicator μιας Μετοχής για να συμπεριληφθεί στο χαρτοφυλάκιο.', 70, 180, 120, 10)
 portfolio_size = st.sidebar.slider('Μέγιστο Πλήθος Μετοχών που θα περιέχει το Χαρτοφυλάκιο.', 5, 25, 10, 1)
 added_value = st.sidebar.slider('Ποσό αναχρηματοδότησης του Χαρτοφυλακίου €/ημέρα. ', 0, 50, 1, 1)
-history_bt = st.sidebar.slider('To backtest του επιλεγμένου χαρτοφυλακίου να γίνει για τις τελυταίες Υ μέρες.', 200,
+history_bt = st.sidebar.slider('To backtest του επιλεγμένου χαρτοφυλακίου να γίνει για τις τελευταίες Υ μέρες.', 200,
                                600, 300, 50)
 df_m = pd.DataFrame()
 m_s = []
