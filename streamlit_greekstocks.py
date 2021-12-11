@@ -196,6 +196,7 @@ momentum_window=st.sidebar.slider('Πλήθος τιμών Μετοχής για
 minimum_momentum=st.sidebar.slider('Ελάχιστη τιμή του momentum indicator μιας Μετοχής για να συμπεριληφθεί στο χαρτοφυλάκιο.',70, 180, 120,10)
 portfolio_size=st.sidebar.slider('Μέγιστο Πλήθος Μετοχών που θα περιέχει το Χαρτοφυλάκιο.',5, 25, 10, 1)
 added_value=st.sidebar.slider('Ποσό αναχρηματοδότησης του Χαρτοφυλακίου €/ημέρα. ',0, 50, 1, 1)
+history_bt=st.sidebar.slider('To backtest του επιλεγμένου χαρτοφυλακίου να γίνει για τις τελυταίες Υ μέρες.',200,600,300,50)
 df_m=pd.DataFrame()
 m_s=[]
 sto=[]
@@ -268,14 +269,16 @@ st.dataframe(df_buy)
 st.write('Στον παραπάνω πίνακα βλέπουμε το σύμβολο της κάθε μετοχής, στην στήλη "weights" το ποσοστό συμμετοχής της στο χαρτοφυλάκιο,')
 st.write('στην στήλη "shares" το πλήθος των μετοχών, στην στήλη "price" την τιμή αγοράς της κάθε μετοχής και')  
 st.write('στην στήλη "value" το συνολικό ποσό χρημάτων που επενδύεται στην κάθε μετοχή')
-st.markdown('''**Παρακάτω βλέπετε το πώς θα είχε αποδώσει ένα χαρτοφυλάκιο με τις παραμέτρους που έχετε επιλέξει αν το κάναμε rebalancing κάθε 5 (εβδομάδα) ,10 (15ήμερο),20 (μήνα) ημέρες**''')
-rs5 =backtest_portfolio(df,dataset=800,l_days=700,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=5,cutoff=cutoff,port_value=port_value,a_v=added_value)
+st.markdown('''**Παρακάτω βλέπετε το πώς θα είχε αποδώσει ένα χαρτοφυλάκιο με τις παραμέτρους που έχετε επιλέξει αν το κάναμε rebalancing
+κάθε 5 (εβδομάδα) ,10 (15ήμερο),20 (μήνα) ημέρες στις τελευταίες ημέρες .**''')
+bt_days=l_close_min-history_bt
+rs5 =backtest_portfolio(df,dataset=bt_days,l_days=bt_days-100,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=5,cutoff=cutoff,port_value=port_value,a_v=added_value)
 st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs5["trades"]} συναλλαγές ανά  5 ημέρες, θα είχαμε μια απόδοση {round(rs5["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs5["final port_value"],2)}€')
 
-rs10=backtest_portfolio(df,dataset=800,l_days=700,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=10,cutoff=cutoff,port_value=port_value,a_v=added_value)
+rs10=backtest_portfolio(df,dataset=bt_days,l_days=bt_days-100,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=10,cutoff=cutoff,port_value=port_value,a_v=added_value)
 st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs10["trades"]} συναλλαγές ανά 10 ημέρες, θα είχαμε μια απόδοση {round(rs10["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs10["final port_value"],2)}€')
 
-rs20=backtest_portfolio(df,dataset=800,l_days=700,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=20,cutoff=cutoff,port_value=port_value,a_v=added_value)
+rs20=backtest_portfolio(df,dataset=bt_days,l_days=bt_days-100,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=20,cutoff=cutoff,port_value=port_value,a_v=added_value)
 st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs20["trades"]} συναλλαγές ανά 20 ημέρες, θα είχαμε μια απόδοση {round(rs20["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs20["final port_value"],2)}€')
 
 st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
