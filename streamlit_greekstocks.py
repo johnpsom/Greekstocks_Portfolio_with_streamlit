@@ -272,13 +272,13 @@ st.markdown('''**Παρακάτω βλέπετε το πώς θα είχε απ�
 κάθε 5 (εβδομάδα) ,10 (15ήμερο),20 (μήνα) ημέρες στις τελευταίες ημέρες .**''')
 bt_days=l_close_min-history_bt
 rs5 =backtest_portfolio(df,dataset=bt_days,l_days=bt_days-100,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=5,cutoff=cutoff,port_value=port_value,a_v=added_value)
-st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs5["trades"]} συναλλαγές ανά  5 ημέρες, θα είχαμε μια απόδοση {round(rs5["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs5["final port_value"],2)}€')
+st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs5["trades"]-1} συναλλαγές ανά  5 ημέρες, θα είχαμε μια απόδοση {round(rs5["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs5["final port_value"],2)}€')
 
 rs10=backtest_portfolio(df,dataset=bt_days,l_days=bt_days-100,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=10,cutoff=cutoff,port_value=port_value,a_v=added_value)
-st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs10["trades"]} συναλλαγές ανά 10 ημέρες, θα είχαμε μια απόδοση {round(rs10["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs10["final port_value"],2)}€')
+st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs10["trades"]-1} συναλλαγές ανά 10 ημέρες, θα είχαμε μια απόδοση {round(rs10["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs10["final port_value"],2)}€')
 
 rs20=backtest_portfolio(df,dataset=bt_days,l_days=bt_days-100,momentum_window=momentum_window,minimum_momentum=minimum_momentum,portfolio_size=portfolio_size,tr_period=20,cutoff=cutoff,port_value=port_value,a_v=added_value)
-st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα κάναμε {rs20["trades"]} συναλλαγές ανά 20 ημέρες, θα είχαμε μια απόδοση {round(rs20["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs20["final port_value"],2)}€')
+st.write(f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs20["trades"]-1} συναλλαγές ανά 20 ημέρες, θα είχαμε μια απόδοση {round(rs20["tot_ret"],2)} % και θα συγκεντρώναμε {round(rs20["final port_value"],2)}€')
 
 st.write('Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
 filenm=st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="My Portfolio",key=1)
