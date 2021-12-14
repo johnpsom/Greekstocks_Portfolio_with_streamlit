@@ -64,7 +64,8 @@ def load_data(tickers_gr):
         low = []
         close = []
         volume = []
-        url = 'https://www.naftemporiki.gr/finance/Data/getHistoryData.aspx?symbol={}&type=csv'.format(ticker)
+        url = 'https://www.naftemporiki.gr/finance/Data/getHistoryData.aspx?symbol={}&type=csv'.format(
+            ticker)
         with closing(req.get(url, verify=True, stream=True)) as r:
             f = (line.decode('utf-8') for line in r.iter_lines())
             reader = csv.reader(f, delimiter=';')
@@ -143,7 +144,8 @@ for ticker in stocks:
     len_values = len(data[ticker])
     l_close = l_close.append({'stock': ticker, 'date': last_date, 'lastprice': last_close,
                               'len_prices': len_values}, ignore_index=True)
-    df_temp = data[ticker].loc[:, ['date', 'close']].rename(columns={'close': ticker}).set_index('date')
+    df_temp = data[ticker].loc[:, ['date', 'close']].rename(
+        columns={'close': ticker}).set_index('date')
     if i == 1:
         close_data = df_temp
         i = i + 1
@@ -179,7 +181,8 @@ st.write('Πίνακας των ημερησίων ποσοστιαίων μετ
 st.dataframe(100 * df_pct.tail(10))
 corr_table = df_pct.corr()
 corr_table['stock1'] = corr_table.index
-corr_table = corr_table.melt(id_vars='stock1', var_name='stock2').reset_index(drop=True)
+corr_table = corr_table.melt(
+    id_vars='stock1', var_name='stock2').reset_index(drop=True)
 corr_table = corr_table[corr_table['stock1'] < corr_table['stock2']].dropna()
 corr_table['abs_value'] = np.abs(corr_table['value'])
 st.write('Πίνακας των τιμών των Συντελεστών Συσχέτισης των Μετοχών')
@@ -187,15 +190,20 @@ st.dataframe(corr_table)
 
 # -----Γενικές παράμετροι
 st.sidebar.write('ΠΑΡΑΜΕΤΡΟΙ ΧΑΡΤΟΦΥΛΑΚΙΟΥ')
-port_value = st.sidebar.slider('Αρχική επένδυση στο χαρτοφυλάκιο €', 1000, 10000, 5000, 100)
-cutoff = st.sidebar.slider('Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.20, 0.10, 0.01)
-momentum_window = st.sidebar.slider('Πλήθος τιμών Μετοχής για τον υπολογισμό του momentum indicator.', 90, 500, 120, 10)
+port_value = st.sidebar.slider(
+    'Αρχική επένδυση στο χαρτοφυλάκιο €', 1000, 10000, 5000, 100)
+cutoff = st.sidebar.slider(
+    'Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.20, 0.10, 0.01)
+momentum_window = st.sidebar.slider(
+    'Πλήθος τιμών Μετοχής για τον υπολογισμό του momentum indicator.', 90, 500, 120, 10)
 minimum_momentum = st.sidebar.slider(
     'Ελάχιστη τιμή του momentum indicator μιας Μετοχής για να συμπεριληφθεί στο χαρτοφυλάκιο.', 70, 180, 120, 10)
-portfolio_size = st.sidebar.slider('Μέγιστο Πλήθος Μετοχών που θα περιέχει το Χαρτοφυλάκιο.', 5, 25, 10, 1)
-added_value = st.sidebar.slider('Ποσό αναχρηματοδότησης του Χαρτοφυλακίου €/ημέρα. ', 0, 50, 1, 1)
-history_bt = st.sidebar.slider('To backtest του επιλεγμένου χαρτοφυλακίου να γίνει για τις τελευταίες Υ μέρες.', 200,
-                               600, 300, 50)
+portfolio_size = st.sidebar.slider(
+    'Μέγιστο Πλήθος Μετοχών που θα περιέχει το Χαρτοφυλάκιο.', 5, 25, 10, 1)
+added_value = st.sidebar.slider(
+    'Ποσό αναχρηματοδότησης του Χαρτοφυλακίου €/ημέρα. ', 0, 50, 1, 1)
+history_bt = st.sidebar.slider('To backtest του επιλεγμένου χαρτοφυλακίου να γίνει για τις τελευταίες Υ μέρες.', 100,
+                               400, 100, 100)
 df_m = pd.DataFrame()
 m_s = []
 sto = []
@@ -207,11 +215,13 @@ df_m['momentum'] = m_s
 dev = df_m['momentum'].std()
 # Get the top momentum stocks for the period
 df_m = df_m.sort_values(by='momentum', ascending=False)
-df_m = df_m[(df_m['momentum'] > minimum_momentum - 0.5 * dev) & (df_m['momentum'] < minimum_momentum + 1.9 * dev)].head(
-    portfolio_size)
+if len(df_m[(df_m['momentum'] > minimum_momentum-0.5*dev) & (df_m['momentum'] < minimum_momentum+1.9*dev)]) < portfolio_size:
+    df_m = df_m.head(portfolio_size)
+else:
+    df_m = df_m[(df_m['momentum'] > minimum_momentum-0.5*dev) &
+                (df_m['momentum'] < minimum_momentum+1.9*dev)].head(portfolio_size)
 # Set the universe to the top momentum stocks for the period
 universe = df_m['stock'].tolist()
-
 # Create a df with just the stocks from the universe
 df_t = select_columns(df_tr, universe)
 st.write(df_t.tail())
@@ -229,8 +239,10 @@ st.subheader('Βελτιστοποιημένο Χαρτοφυλάκιο')
 st.write('Το προτεινόμενο χαρτοφυλάκιο από τις ιστορικές τιμές των επιλεγμένων μετοχών έχει τα παρακάτω χαρακτηριστικά')
 st.write('Αρχική Αξία Χαρτοφυλακίου : ' + str(port_value) + '€')
 st.write('Sharpe Ratio: ' + str(round(ef.portfolio_performance()[2], 2)))
-st.write('Απόδοση Χαρτοφυλακίο: ' + str(round(ef.portfolio_performance()[0] * 100, 2)) + '%')
-st.write('Μεταβλητότητα Χαρτοφυλακίου: ' + str(round(ef.portfolio_performance()[1] * 100, 2)) + '%')
+st.write('Απόδοση Χαρτοφυλακίο: ' +
+         str(round(ef.portfolio_performance()[0] * 100, 2)) + '%')
+st.write('Μεταβλητότητα Χαρτοφυλακίου: ' +
+         str(round(ef.portfolio_performance()[1] * 100, 2)) + '%')
 # Allocate
 latest_prices = get_latest_prices(df_t)
 da = DiscreteAllocation(cleaned_weights,
@@ -262,12 +274,11 @@ df_buy['price'] = l_price
 df_buy['value'] = tot_cash
 st.write('Επενδυμένο σε μετοχές {0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(df_buy['value'].sum(), 100 * df_buy[
     'value'].sum() / port_value))
-st.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(port_value - df_buy['value'].sum(),
-                                                                                  100 - 100 * df_buy[
-                                                                                      'value'].sum() / port_value))
+st.write('Εναπομείναντα μετρητά :{0:.2f}€ ή το {1:.2f}% του χαρτοφυλακίου'.format(
+    non_trading_cash, 100*non_trading_cash / port_value))
 df_buy = df_buy.append({'stock': 'CASH', 'weights': round(1 - df_buy['value'].sum() / port_value, 2), 'shares': 1,
-                        'price': round(port_value - df_buy['value'].sum(), 2),
-                        'value': round(port_value - df_buy['value'].sum(), 2)}, ignore_index=True)
+                        'price': round(non_trading_cash, 2),
+                        'value': round(non_trading_cash, 2)}, ignore_index=True)
 # df_buy=df_buy.set_index('stock')
 st.dataframe(df_buy)
 st.write(
@@ -277,36 +288,73 @@ st.write('στην στήλη "value" το συνολικό ποσό χρημά�
 st.markdown('''**Παρακάτω βλέπετε το πώς θα είχε αποδώσει ένα χαρτοφυλάκιο με τις παραμέτρους που έχετε επιλέξει αν το κάναμε rebalancing
 κάθε 5 (εβδομάδα) ,10 (15ήμερο),20 (μήνα) ημέρες στις τελευταίες ημέρες .**''')
 bt_days = l_close_min - history_bt
-rs5 = backtest_portfolio(df, dataset=bt_days, l_days=bt_days - 100, momentum_window=momentum_window,
+rs5 = backtest_portfolio(df, bt_dataset=bt_days, lookback_days=momentum_window, momentum_window=momentum_window,
                          minimum_momentum=minimum_momentum, portfolio_size=portfolio_size, tr_period=5, cutoff=cutoff,
-                         port_value=port_value, a_v=added_value)
-st.write(
-    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs5["trades"] - 1} συναλλαγές ανά  5 ημέρες, θα είχαμε μια απόδοση {round(rs5["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs5["final port_value"], 2)}€')
+                         port_value=port_value, a_v=added_value)[0]
 
-rs10 = backtest_portfolio(df, dataset=bt_days, l_days=bt_days - 100, momentum_window=momentum_window,
+
+chart_data5 = backtest_portfolio(df, bt_dataset=bt_days, lookback_days=momentum_window, momentum_window=momentum_window,
+                                 minimum_momentum=minimum_momentum, portfolio_size=portfolio_size, tr_period=5, cutoff=cutoff,
+                                 port_value=port_value, a_v=added_value)[1]
+st.write(
+    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs5["trades"]} συναλλαγές ανά  5 ημέρες, θα είχαμε μια απόδοση {round(rs5["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs5["final port_value"], 2)}€')
+
+with st.expander("Παρακάτω βλέπετε και το διάγραμμα με την μεταβολή της αξίας του χαρτοφυλακίου για το backtest"):
+    st.write("""
+         Το διάγραμμα δείχνει την μεταβολή της αξίας του χαρτοφυλακίου στο χ΄ρόνο
+         """)
+    st.bar_chart(data=chart_data5.loc[:, ['portvalue']],
+                 width=0, height=0, use_container_width=True)
+
+rs10 = backtest_portfolio(df, bt_dataset=bt_days, lookback_days=momentum_window, momentum_window=momentum_window,
                           minimum_momentum=minimum_momentum, portfolio_size=portfolio_size, tr_period=10, cutoff=cutoff,
-                          port_value=port_value, a_v=added_value)
-st.write(
-    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs10["trades"] - 1} συναλλαγές ανά 10 ημέρες, θα είχαμε μια απόδοση {round(rs10["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs10["final port_value"], 2)}€')
+                          port_value=port_value, a_v=added_value)[0]
 
-rs20 = backtest_portfolio(df, dataset=bt_days, l_days=bt_days - 100, momentum_window=momentum_window,
+chart_data10 = backtest_portfolio(df, bt_dataset=bt_days, lookback_days=momentum_window, momentum_window=momentum_window,
+                                  minimum_momentum=minimum_momentum, portfolio_size=portfolio_size, tr_period=10, cutoff=cutoff,
+                                  port_value=port_value, a_v=added_value)[1]
+
+st.write(
+    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs10["trades"]} συναλλαγές ανά 10 ημέρες, θα είχαμε μια απόδοση {round(rs10["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs10["final port_value"], 2)}€')
+
+with st.expander("Παρακάτω βλέπετε και το διάγραμμα με την μεταβολή της αξίας του χαρτοφυλακίου για το backtest"):
+    st.write("""
+         Το διάγραμμα δείχνει την μεταβολή της αξίας του χαρτοφυλακίου στο χ΄ρόνο
+         """)
+    st.bar_chart(data=chart_data10.loc[:, [
+                 'portvalue']], width=0, height=0, use_container_width=True)
+
+rs20 = backtest_portfolio(df, bt_dataset=bt_days, lookback_days=momentum_window, momentum_window=momentum_window,
                           minimum_momentum=minimum_momentum, portfolio_size=portfolio_size, tr_period=20, cutoff=cutoff,
-                          port_value=port_value, a_v=added_value)
-st.write(
-    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs20["trades"] - 1} συναλλαγές ανά 20 ημέρες, θα είχαμε μια απόδοση {round(rs20["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs20["final port_value"], 2)}€')
+                          port_value=port_value, a_v=added_value)[0]
 
+chart_data20 = backtest_portfolio(df, bt_dataset=bt_days, lookback_days=momentum_window, momentum_window=momentum_window,
+                                  minimum_momentum=minimum_momentum, portfolio_size=portfolio_size, tr_period=20, cutoff=cutoff,
+                                  port_value=port_value, a_v=added_value)[1]
+st.write(
+    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs20["trades"]} συναλλαγές ανά 20 ημέρες, θα είχαμε μια απόδοση {round(rs20["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs20["final port_value"], 2)}€')
+
+with st.expander("Παρακάτω βλέπετε και το διάγραμμα με την μεταβολή της αξίας του χαρτοφυλακίου για το backtest"):
+    st.write("""
+         Το διάγραμμα δείχνει την μεταβολή της αξίας του χαρτοφυλακίου στο χ΄ρόνο
+         """)
+    st.bar_chart(data=chart_data20.loc[:, [
+                 'portvalue']], width=0, height=0, use_container_width=True)
 st.write(
     'Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
-filenm = st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο', value="My Portfolio", key=1)
+filenm = st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο',
+                       value="My Portfolio", key=1)
 if st.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1', key=1):
     filename = filenm + '.csv'
-    download_button_str = download_button(df_buy, filename, f'Click here to download {filename}', pickle_it=False)
+    download_button_str = download_button(
+        df_buy, filename, f'Click here to download {filename}', pickle_it=False)
     st.markdown(download_button_str, unsafe_allow_html=True)
 
 st.subheader(
     'Εαν έχετε προηγουμένως χρησιμοποιήσει την εφαρμογή και έχετε ζητήσει ένα Χαροφυλάκιο ανεβάστε το csv αρχείο στο παρακάτω πεδίο για να δείτε την απόδοσή του σήμερα.')
 st.markdown(STYLE, unsafe_allow_html=True)
-file = st.file_uploader("Σύρτε και αφήστε εδώ το Χαρτοφυλάκιό σας έφτιαξε η εφαρμογή για σας (*.csv)", type='csv')
+file = st.file_uploader(
+    "Σύρτε και αφήστε εδώ το Χαρτοφυλάκιό σας έφτιαξε η εφαρμογή για σας (*.csv)", type='csv')
 show_file = st.empty()
 if not file:
     show_file.info("")
@@ -319,9 +367,11 @@ else:
     pct = []
     for stock in list(df_old.iloc[:-1]['stock']):
         last_price.append(df.iloc[-1][stock])
-        nv = df_old.loc[df_old['stock'] == stock, 'shares'].values[0] * df.iloc[-1][stock]
+        nv = df_old.loc[df_old['stock'] == stock,
+                        'shares'].values[0] * df.iloc[-1][stock]
         new_values.append(nv)
-        pt = round(100 * (df.iloc[-1][stock] / df_old.loc[df_old['stock'] == stock, 'bought price'].values[0] - 1), 2)
+        pt = round(100 * (df.iloc[-1][stock] / df_old.loc[df_old['stock']
+                   == stock, 'bought price'].values[0] - 1), 2)
         pct.append(pt)
     last_price.append(0)
     pct.append(0)
@@ -337,7 +387,8 @@ else:
     df_old['new weights'] = new_weights
     st.write(f'Αρχική αξία του Χαροφυλακίου ήταν :{df_old["value"].sum()} €')
     st.write(f'Τώρα είναι : {round(new_port_value, 2)} €')
-    st.write(f'δηλ. έχουμε μια απόδοση ίση με {100 * round(new_port_value / df_old["value"].sum() - 1, 4)} %')
+    st.write(
+        f'δηλ. έχουμε μια απόδοση ίση με {100 * round(new_port_value / df_old["value"].sum() - 1, 4)} %')
     st.dataframe(df_old)
     file.close()
     rebalance_portfolio(df_old, df_buy)
