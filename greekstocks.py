@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Oct 25 13:19:50 2020
+@author: getyour.portfolio@gmail.com
+"""
+
+
 import streamlit as st
 from datetime import datetime
 import pandas as pd
@@ -104,7 +111,7 @@ def capm_returns(prices, market_prices=None, returns_data=False, risk_free_rate=
     # Find mean market return on a given time period
     if compounding:
         mkt_mean_ret = (1 + returns["mkt"]).prod() ** (
-                frequency / returns["mkt"].count()
+            frequency / returns["mkt"].count()
         ) - 1
     else:
         mkt_mean_ret = returns["mkt"].mean() * frequency
@@ -252,7 +259,8 @@ def download_button(object_to_download, download_filename, button_text, pickle_i
                 }}
         </style> """
 
-    dl_link = custom_css + f'<a download="{download_filename}" id="{button_id}" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}">{button_text}</a><br></br>'
+    dl_link = custom_css + \
+        f'<a download="{download_filename}" id="{button_id}" href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}">{button_text}</a><br></br>'
     return dl_link
 
 
@@ -282,7 +290,8 @@ def backtest_portfolio(df, dataset=1000, l_days=700, momentum_window=120, minimu
             if keep_df_buy is False:
                 # print('Sell date',df_date)
                 for s in allocation:
-                    new_port_value = new_port_value + allocation.get(s) * latest_prices.get(s)
+                    new_port_value = new_port_value + \
+                        allocation.get(s) * latest_prices.get(s)
                     # print('Sell ',s,'stocks: ',allocation.get(s),' bought for ',df_buy['price'][s],' sold for ',latest_prices.get(s)
                     #       ,' for total:{0:.2f} and a gain of :{1:.2f}'.format(allocation.get(s)*latest_prices.get(s),
                     #      (latest_prices.get(s)-df_buy['price'][s])*allocation.get(s)))
@@ -326,14 +335,16 @@ def backtest_portfolio(df, dataset=1000, l_days=700, momentum_window=120, minimu
             port_value = port_value + added_value
             keep_df_buy = True
 
-    total_ret = 100 * (new_port_value / (init_portvalue + no_tr * added_value) - 1)
+    total_ret = 100 * (new_port_value /
+                       (init_portvalue + no_tr * added_value) - 1)
     dura_tion = (no_tr - 1) * tr_period
     if no_tr > 2:
         # print('Total return: {0:.2f} in {1} days'.format(total_ret,dura_tion))
         # print('Cumulative portfolio return:',round(list(pval['porteff'].cumsum())[-1],2))
         # print('total capital:',init_portvalue+no_tr*added_value, new_port_value)
         tot_contr = init_portvalue + no_tr * added_value
-        s = round(pd.DataFrame(plotted_portval).pct_change().add(1).cumprod() * 10, 2)
+        s = round(pd.DataFrame(plotted_portval).pct_change().add(
+            1).cumprod() * 10, 2)
         rs = {'trades': no_tr, 'momentum_window': momentum_window,
               'minimum_momentum': minimum_momentum,
               'portfolio_size': portfolio_size,
@@ -349,17 +360,20 @@ def rebalance_portfolio(df_old, df_new):
     '''rebalance old with new proposed portfolio'''
     old_port_value = df_old['value'].sum()
     new_port_value = old_port_value
-    new_stocks = list(df_old.stock[:-1]) + list(set(df_new.stock[:-1]) - set(df_old.stock))
+    new_stocks = list(df_old.stock[:-1]) + \
+        list(set(df_new.stock[:-1]) - set(df_old.stock))
     for stock in new_stocks:
         # close old positions that do not appear in new portfolio
         if (stock in list(df_old.stock)) and (stock not in list(df_new.stock[:-1])):
             # close positions
             if df_old.loc[df_old.stock == stock, 'shares'].values[0] > 0:
                 st.write(f'κλείσιμο θέσης στην μετοχή {stock}')
-                new_port_value = new_port_value + df_old.loc[df_old.stock == stock, 'shares'].values[0]
+                new_port_value = new_port_value + \
+                    df_old.loc[df_old.stock == stock, 'shares'].values[0]
             if df_old.loc[df_old.stock == stock, 'shares'].values[0] < 0:
                 st.write(f'κλείσιμο θέσης στην μετοχή {stock}')
-                new_port_value = new_port_value + df_old.loc[df_old.stock == stock, 'shares'].values[0]
+                new_port_value = new_port_value + \
+                    df_old.loc[df_old.stock == stock, 'shares'].values[0]
         # open new positions that only appear in new portfolio
         if stock in list(set(df_new.stock[:-1]) - set(df_old.loc[:, 'stock'])):
             if df_new.loc[df_new.stock == stock, 'shares'].values[0] > 0:
@@ -374,25 +388,31 @@ def rebalance_portfolio(df_old, df_new):
             if df_new.loc[df_new.stock == stock, 'shares'].values[0] > 0 and \
                     df_old.loc[df_old.stock == stock, 'shares'].values[0] > 0:
                 new_shares = df_new.loc[df_new.stock == stock, "shares"].values[0] - \
-                             df_old.loc[df_old.stock == stock, 'shares'].values[0]
+                    df_old.loc[df_old.stock == stock, 'shares'].values[0]
                 if new_shares >= 0:
-                    st.write(f'Αγόρασε ακόμη {round(new_shares, 0)} της μετοχής {stock}')
+                    st.write(
+                        f'Αγόρασε ακόμη {round(new_shares, 0)} της μετοχής {stock}')
                 if new_shares < 0:
-                    st.write(f'Πούλησε ακόμη {round(-new_shares, 0)} της μετοχής {stock}')
+                    st.write(
+                        f'Πούλησε ακόμη {round(-new_shares, 0)} της μετοχής {stock}')
             if df_new.loc[df_new.stock == stock, 'shares'].values[0] < 0 and \
                     df_old.loc[df_old.stock == stock, 'shares'].values[0] < 0:
                 new_shares = df_new.loc[df_new.stock == stock, "shares"].values[0] - \
-                             df_old.loc[df_old.stock == stock, 'shares'].values[0]
+                    df_old.loc[df_old.stock == stock, 'shares'].values[0]
                 if new_shares >= 0:
-                    st.write(f'Αγόρασε ακόμη {round(new_shares, 0)} της μετοχής {stock}')
+                    st.write(
+                        f'Αγόρασε ακόμη {round(new_shares, 0)} της μετοχής {stock}')
                 if new_shares < 0:
-                    st.write(f'Πούλησε ακόμη {round(-new_shares, 0)} της μετοχής {stock}')
+                    st.write(
+                        f'Πούλησε ακόμη {round(-new_shares, 0)} της μετοχής {stock}')
             if df_new.loc[df_new.stock == stock, 'shares'].values[0] * \
                     df_old.loc[df_old.stock == stock, 'shares'].values[0] < 0:
                 new_shares = df_new.loc[df_new.stock == stock, 'shares'].values[0] - \
-                             df_old.loc[df_old.stock == stock, 'shares'].values[0]
+                    df_old.loc[df_old.stock == stock, 'shares'].values[0]
                 if new_shares >= 0:
-                    st.write(f'Αγόρασε ακόμη {round(new_shares, 0)} της μετοχής {stock}')
+                    st.write(
+                        f'Αγόρασε ακόμη {round(new_shares, 0)} της μετοχής {stock}')
                 if new_shares < 0:
-                    st.write(f'Πούλησε ακόμη {round(-new_shares, 0)} της μετοχής {stock}')
+                    st.write(
+                        f'Πούλησε ακόμη {round(-new_shares, 0)} της μετοχής {stock}')
     return new_port_value
