@@ -332,7 +332,7 @@ chart_data20 = backtest_portfolio(df, bt_dataset=bt_days, lookback_days=momentum
                                   minimum_momentum=minimum_momentum, portfolio_size=portfolio_size, tr_period=20, cutoff=cutoff,
                                   port_value=port_value, a_v=added_value)[1]
 st.write(
-    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs20["trades"]} συναλλαγές ανά 20 ημέρες, θα είχαμε μια απόδοση {round(rs20["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs20["final port_value"], 2)}€')
+    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs20["trades"]} συναλλαγές ανά 20 ημέρες, θα είχαμε μια απόδοση {round(rs20["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs20["final port_value"], 2)}€ με drawdown {round(rs20["drawdown"], 2)}% ')
 
 with st.expander("Παρακάτω βλέπετε και το διάγραμμα με την μεταβολή της αξίας του χαρτοφυλακίου για το backtest"):
     st.write("""
