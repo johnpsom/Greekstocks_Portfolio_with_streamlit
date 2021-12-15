@@ -297,7 +297,7 @@ chart_data5 = backtest_portfolio(df, bt_dataset=bt_days, lookback_days=momentum_
                                  minimum_momentum=minimum_momentum, portfolio_size=portfolio_size, tr_period=5, cutoff=cutoff,
                                  port_value=port_value, a_v=added_value)[1]
 st.write(
-    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs5["trades"]} συναλλαγές ανά  5 ημέρες, θα είχαμε μια απόδοση {round(rs5["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs5["final port_value"], 2)}€')
+    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs5["trades"]} συναλλαγές ανά  5 ημέρες, θα είχαμε μια απόδοση {round(rs5["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs5["final port_value"], 2)}€ με drawdown {round(rs5["drawdown"], 2)}%')
 
 with st.expander("Παρακάτω βλέπετε και το διάγραμμα με την μεταβολή της αξίας του χαρτοφυλακίου για το backtest"):
     st.write("""
@@ -315,7 +315,7 @@ chart_data10 = backtest_portfolio(df, bt_dataset=bt_days, lookback_days=momentum
                                   port_value=port_value, a_v=added_value)[1]
 
 st.write(
-    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs10["trades"]} συναλλαγές ανά 10 ημέρες, θα είχαμε μια απόδοση {round(rs10["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs10["final port_value"], 2)}€')
+    f'Με αρχικό κεφάλαιο {port_value}€, θα είχαμε κάνει {rs10["trades"]} συναλλαγές ανά 10 ημέρες, θα είχαμε μια απόδοση {round(rs10["tot_ret"], 2)} % και θα συγκεντρώναμε {round(rs10["final port_value"], 2)}€ με drawdown {round(rs10["drawdown"], 2)}%')
 
 with st.expander("Παρακάτω βλέπετε και το διάγραμμα με την μεταβολή της αξίας του χαρτοφυλακίου για το backtest"):
     st.write("""
