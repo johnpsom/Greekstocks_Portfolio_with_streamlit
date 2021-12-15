@@ -295,7 +295,7 @@ def backtest_portfolio(prices_df, bt_dataset=800, lookback_days=700, momentum_wi
                     allocation.get(s)*latest_prices.get(s)
             eff = new_port_value/port_value-1
             port_value = new_port_value
-            port_value = port_value+added_value  # add 200 after each trading period
+            port_value = port_value+added_value  
         df_m = pd.DataFrame()
         m_s = []
         st = []
@@ -347,7 +347,7 @@ def backtest_portfolio(prices_df, bt_dataset=800, lookback_days=700, momentum_wi
           'tot_ret': total_ret,
           'drawdown': s.diff().min()[0]}
 
-    return rs, pval
+    return rs, pval[1:]
 
 
 def backtest_portfolio2(prices_df, bt_dataset=800, lookback_days=700, momentum_window=120, minimum_momentum=70, portfolio_size=5, tr_period=5, cutoff=0.05, port_value=10000, a_v=0):
