@@ -301,7 +301,7 @@ st.write(
 
 with st.expander("Παρακάτω βλέπετε και το διάγραμμα με την μεταβολή της αξίας του χαρτοφυλακίου για το backtest"):
     st.write("""
-         Το διάγραμμα δείχνει την μεταβολή της αξίας του χαρτοφυλακίου στο χ΄ρόνο
+         Το διάγραμμα δείχνει την μεταβολή της αξίας του χαρτοφυλακίου στο χρόνο
          """)
     st.bar_chart(data=chart_data5.loc[:, ['portvalue']],
                  width=0, height=0, use_container_width=True)
@@ -319,7 +319,7 @@ st.write(
 
 with st.expander("Παρακάτω βλέπετε και το διάγραμμα με την μεταβολή της αξίας του χαρτοφυλακίου για το backtest"):
     st.write("""
-         Το διάγραμμα δείχνει την μεταβολή της αξίας του χαρτοφυλακίου στο χ΄ρόνο
+         Το διάγραμμα δείχνει την μεταβολή της αξίας του χαρτοφυλακίου στο χρόνο
          """)
     st.bar_chart(data=chart_data10.loc[:, [
                  'portvalue']], width=0, height=0, use_container_width=True)
@@ -336,15 +336,15 @@ st.write(
 
 with st.expander("Παρακάτω βλέπετε και το διάγραμμα με την μεταβολή της αξίας του χαρτοφυλακίου για το backtest"):
     st.write("""
-         Το διάγραμμα δείχνει την μεταβολή της αξίας του χαρτοφυλακίου στο χ΄ρόνο
+         Το διάγραμμα δείχνει την μεταβολή της αξίας του χαρτοφυλακίου στο χρόνο
          """)
     st.bar_chart(data=chart_data20.loc[:, [
                  'portvalue']], width=0, height=0, use_container_width=True)
-st.write(
+st.subheader(
     'Εάν θέλεις να σώσεις το παραπάνω χαρτοφυλάκιο τότε δώσε ένα όνομα και ένα email και μετά πάτησε το κουμπί για να σου αποσταλεί σαν αρχείο.')
 filenm = st.text_input('Δώσε ένα όνομα στο Χαρτοφυλάκιο',
                        value="My Portfolio", key=1)
-if st.button('Σώσε αυτό το Χαρτοφυλάκιο τύπου 1', key=1):
+if st.button('Σώσε αυτό το Χαρτοφυλάκιο', key=1):
     filename = filenm + '.csv'
     download_button_str = download_button(
         df_buy, filename, f'Click here to download {filename}', pickle_it=False)
