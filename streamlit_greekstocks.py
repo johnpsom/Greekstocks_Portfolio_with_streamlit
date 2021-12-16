@@ -192,18 +192,19 @@ st.dataframe(corr_table)
 st.sidebar.write('ΠΑΡΑΜΕΤΡΟΙ ΧΑΡΤΟΦΥΛΑΚΙΟΥ')
 port_value = st.sidebar.slider(
     'Αρχική επένδυση στο χαρτοφυλάκιο €', 1000, 10000, 2000, 100)
-cutoff = st.sidebar.slider(
-    'Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.20, 0.05, 0.01)
 momentum_window = st.sidebar.slider(
     'Πλήθος τιμών Μετοχής για τον υπολογισμό του momentum indicator.', 90, 500, 250, 10)
 minimum_momentum = st.sidebar.slider(
     'Ελάχιστη τιμή του momentum indicator μιας Μετοχής για να συμπεριληφθεί στο χαρτοφυλάκιο.', 70, 180, 90, 10)
 portfolio_size = st.sidebar.slider(
     'Μέγιστο Πλήθος Μετοχών που θα περιέχει το Χαρτοφυλάκιο.', 5, 25, 5, 1)
-added_value = st.sidebar.slider(
-    'Ποσό αναχρηματοδότησης του Χαρτοφυλακίου €/ημέρα. ', 0, 50, 0, 1)
+cutoff = st.sidebar.slider(
+    'Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.20, 0.05, 0.01)
 history_bt = st.sidebar.slider('To backtest του επιλεγμένου χαρτοφυλακίου να γίνει για τις τελευταίες Υ μέρες.', 100,
                                400, 200, 100)
+added_value = st.sidebar.slider(
+    'Ποσό αναχρηματοδότησης του Χαρτοφυλακίου €/ημέρα. ', 0, 50, 0, 1)
+
 df_m = pd.DataFrame()
 m_s = []
 sto = []
