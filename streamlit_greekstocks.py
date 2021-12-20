@@ -191,7 +191,8 @@ minimum_momentum = st.sidebar.slider(
 portfolio_size = st.sidebar.slider(
     'Μέγιστο Πλήθος Μετοχών που θα περιέχει το Χαρτοφυλάκιο.', 5, 25, 5, 1)
 cutoff = st.sidebar.slider(
-    'Ελάχιστο Ποσοστό Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 0.01, 0.20, 0.05, 0.01)
+    'Ελάχιστο Ποσοστό  % Συμμετοχής μιας Μετοχής στο Χαρτοφυλάκιο.', 1, 20, 5, 1)
+cutoff/=100
 history_bt = st.sidebar.slider('To backtest του επιλεγμένου χαρτοφυλακίου να γίνει για τις τελευταίες Υ μέρες.', 100,
                                400, 200, 100)
 added_value = st.sidebar.slider(
